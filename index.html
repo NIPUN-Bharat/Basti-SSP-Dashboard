@@ -804,7 +804,7 @@
     font-size: 0.74rem; color: var(--ink-muted); margin-top: 0.3rem;
     text-transform: uppercase; letter-spacing: 0.04em;
   }
-  .ov-card .ov-sub { font-size: 0.76rem; color: var(--ink-faint); margin-top: 0.35rem; }
+  .ov-card .ov-sub { font-size: 0.76rem; color: var(--ink-faint); margin-top: 0.35rem; line-height: 1.6; }
   .ov-card.is-good { border-top-color: var(--green); }
   .ov-card.is-good .ov-num { color: var(--green); }
   .ov-card.is-bad  { border-top-color: var(--red); }
@@ -1588,15 +1588,17 @@ async function loadOverviewData() {
   cards.innerHTML = '<div class="ov-loading">Loading district summary…</div>';
   try {
     const f = getOverviewFilters();
-    const [blockResp, gradeResp] = await Promise.all([
-      fetchData({ dataset: 'blocks', quarter: f.quarter, grade: f.grade, schoolType: f.schoolType, month: f.month }),
-      fetchData({ dataset: 'grades', quarter: f.quarter, schoolType: f.schoolType, month: f.month })
+    const [blockResp, gradeResp, studentResp] = await Promise.all([
+      fetchData({ dataset: 'blocks',   quarter: f.quarter, grade: f.grade, schoolType: f.schoolType, month: f.month }),
+      fetchData({ dataset: 'grades',   quarter: f.quarter, schoolType: f.schoolType, month: f.month }),
+      fetchData({ dataset: 'students', quarter: f.quarter, month: f.month })
     ]);
     if (!blockResp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(blockResp) });
     ALL_BLOCKS = Array.isArray(blockResp.data) ? blockResp.data : [];
-    const grades = (gradeResp && gradeResp.ok && Array.isArray(gradeResp.data)) ? gradeResp.data : [];
-    console.log(`[Overview] Loaded ${ALL_BLOCKS.length} blocks, ${grades.length} grades`);
-    renderOverviewCards(ALL_BLOCKS, grades);
+    const grades   = (gradeResp   && gradeResp.ok   && Array.isArray(gradeResp.data))   ? gradeResp.data   : [];
+    const students = (studentResp && studentResp.ok && Array.isArray(studentResp.data)) ? studentResp.data : [];
+    console.log(`[Overview] Loaded ${ALL_BLOCKS.length} blocks, ${grades.length} grades, ${students.length} students`);
+    renderOverviewCards(ALL_BLOCKS, students);
     renderGradeRows(grades);
     renderBlockRows(ALL_BLOCKS);
   } catch (e) {
@@ -1634,7 +1636,7 @@ function kpiCard(num, label, sub, cls) {
      </div>`;
 }
 
-function renderOverviewCards(blocks, grades) {
+function renderOverviewCards(blocks, studentsList) {
   let schools = 0, covered = 0, students = 0, nipun = 0, atRisk = 0,
       litW = 0, litN = 0, numW = 0, numN = 0;
 
@@ -1648,27 +1650,31 @@ function renderOverviewCards(blocks, grades) {
     if (b.numeracyPct != null) { numW += b.numeracyPct * b.totalStudents; numN += b.totalStudents; }
   });
 
-  // ORF: read from grades data (grade 2 and grade 3 objects from GAS)
-  // GAS returns orf as avg cwpm per grade, totalStudents as student count
-  // We compute orfNipun from orf average and thresholds (approximation for proficiency %)
-  const g2 = (grades || []).find(g => Number(g.grade) === 2) || null;
-  const g3 = (grades || []).find(g => Number(g.grade) === 3) || null;
-  const g2AvgOrf = g2 && g2.orf != null ? g2.orf : null;
-  const g3AvgOrf = g3 && g3.orf != null ? g3.orf : null;
-  const g2students = g2 ? (g2.totalStudents || 0) : 0;
-  const g3students = g3 ? (g3.totalStudents || 0) : 0;
-  // ORF Proficiency %: use orfNipunStudents if GAS returns it, else estimate from avg
-  const g2orfNipun = g2 && g2.orfNipunStudents != null ? g2.orfNipunStudents : null;
-  const g3orfNipun = g3 && g3.orfNipunStudents != null ? g3.orfNipunStudents : null;
-  const orfProfTotal  = g2students + g3students;
-  const orfProfNipun  = (g2orfNipun || 0) + (g3orfNipun || 0);
-  const orfProfPct    = (orfProfTotal && (g2orfNipun != null || g3orfNipun != null))
-                          ? (orfProfNipun / orfProfTotal) * 100 : null;
+  // ORF: computed directly from student records — identical logic to Student tab
+  // so both tabs always show the same number
+  let g2orfSum = 0, g2orfN = 0, g2orfNipun = 0;
+  let g3orfSum = 0, g3orfN = 0, g3orfNipun = 0;
+  (studentsList || []).forEach(s => {
+    if (s.orf != null && typeof s.orf === 'number') {
+      if (Number(s.grade) === 2) {
+        g2orfSum += s.orf; g2orfN++;
+        if (s.orf >= 45) g2orfNipun++;
+      } else if (Number(s.grade) === 3) {
+        g3orfSum += s.orf; g3orfN++;
+        if (s.orf >= 60) g3orfNipun++;
+      }
+    }
+  });
+  const g2AvgOrf     = g2orfN ? g2orfSum / g2orfN : null;
+  const g3AvgOrf     = g3orfN ? g3orfSum / g3orfN : null;
+  const orfProfTotal = g2orfN + g3orfN;
+  const orfProfNipun = g2orfNipun + g3orfNipun;
+  const orfProfPct   = orfProfTotal ? (orfProfNipun / orfProfTotal) * 100 : null;
+
   const litPct = litN ? litW / litN : null;
   const numPct = numN ? numW / numN : null;
   const nipunPct       = students ? (nipun / students) * 100 : 0;
   const atRiskPct      = students ? (atRisk / students) * 100 : 0;
-  // (g2AvgOrf, g3AvgOrf, orfProfPct computed above from grades data)
 
   // Count Approaching students
   let approaching = 0;
@@ -1682,17 +1688,12 @@ function renderOverviewCards(blocks, grades) {
     kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
     kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
     kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
-    kpiCard(orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
+    kpiCard(
+         orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
          'ORF Proficiency',
-         (g2AvgOrf != null ? `G2 avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2: —') + '  ·  ' +
-         (g3AvgOrf != null ? `G3 avg: ${Math.round(g3AvgOrf)} cwpm` : 'G3: —'),
-         orfProfPct != null && orfProfPct >= 60 ? 'is-good' : orfProfPct != null ? 'is-bad' : ''),
-    kpiCard(g2AvgOrf == null ? '\u2014' : `${Math.round(g2AvgOrf)} <span style="font-size:1rem;font-weight:500;color:var(--ink-muted)">cwpm</span>`,
-         'G2 Avg ORF', 'NIPUN ≥ 45 · Approaching 30–44 · At Risk <30',
-         g2AvgOrf != null && g2AvgOrf >= 45 ? 'is-good' : g2AvgOrf != null && g2AvgOrf >= 30 ? 'is-approaching' : g2AvgOrf != null ? 'is-bad' : ''),
-    kpiCard(g3AvgOrf == null ? '\u2014' : `${Math.round(g3AvgOrf)} <span style="font-size:1rem;font-weight:500;color:var(--ink-muted)">cwpm</span>`,
-         'G3 Avg ORF', 'NIPUN ≥ 60 · Approaching 45–59 · At Risk <45',
-         g3AvgOrf != null && g3AvgOrf >= 60 ? 'is-good' : g3AvgOrf != null && g3AvgOrf >= 45 ? 'is-approaching' : g3AvgOrf != null ? 'is-bad' : '')
+         (g2AvgOrf != null ? `G2 Avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2 Avg: —') + '<br>' +
+         (g3AvgOrf != null ? `G3 Avg: ${Math.round(g3AvgOrf)} cwpm` : 'G3 Avg: —'),
+         orfProfPct != null && orfProfPct >= 60 ? 'is-good' : orfProfPct != null ? 'is-bad' : '')
   ].join('');
 }
 
@@ -1722,8 +1723,6 @@ function renderSchoolCards(scoped, covered) {
   const el = document.getElementById('s-cards');
   if (!el) return;
   el.innerHTML = [
-    kpiCard(`${fmtIN.format(covered.length)} <span class="ov-of">/ ${fmtIN.format(scoped.length)}</span>`,
-         'Schools Covered', `${fmtIN.format(scoped.length - covered.length)} not yet covered`),
     kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
     kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
     kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
@@ -1769,17 +1768,12 @@ function renderStudentCards(filtered) {
     kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
     kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
     kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
-    kpiCard(orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
+    kpiCard(
+         orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
          'ORF Proficiency',
-         (g2AvgOrf != null ? `G2 avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2: —') + '  ·  ' +
-         (g3AvgOrf != null ? `G3 avg: ${Math.round(g3AvgOrf)} cwpm` : 'G3: —'),
-         orfProfPct != null && orfProfPct >= 60 ? 'is-good' : orfProfPct != null ? 'is-bad' : ''),
-    kpiCard(g2AvgOrf == null ? '\u2014' : `${Math.round(g2AvgOrf)} <span style="font-size:1rem;font-weight:500;color:var(--ink-muted)">cwpm</span>`,
-         'G2 Avg ORF', 'NIPUN ≥ 45 · Approaching 30–44 · At Risk <30',
-         g2AvgOrf != null && g2AvgOrf >= 45 ? 'is-good' : g2AvgOrf != null && g2AvgOrf >= 30 ? 'is-approaching' : g2AvgOrf != null ? 'is-bad' : ''),
-    kpiCard(g3AvgOrf == null ? '\u2014' : `${Math.round(g3AvgOrf)} <span style="font-size:1rem;font-weight:500;color:var(--ink-muted)">cwpm</span>`,
-         'G3 Avg ORF', 'NIPUN ≥ 60 · Approaching 45–59 · At Risk <45',
-         g3AvgOrf != null && g3AvgOrf >= 60 ? 'is-good' : g3AvgOrf != null && g3AvgOrf >= 45 ? 'is-approaching' : g3AvgOrf != null ? 'is-bad' : '')
+         (g2AvgOrf != null ? `G2 Avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2 Avg: —') + '<br>' +
+         (g3AvgOrf != null ? `G3 Avg: ${Math.round(g3AvgOrf)} cwpm` : 'G3 Avg: —'),
+         orfProfPct != null && orfProfPct >= 60 ? 'is-good' : orfProfPct != null ? 'is-bad' : '')
   ].join('');
 }
 
