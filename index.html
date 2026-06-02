@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIPUN Basti — School Support Program Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a3a5c;
+    --navy-dark: #0f2540;
+    --navy-light: #2a5689;
+    --saffron: #d97e1f;
+    --saffron-light: #f4a85e;
+    --cream: #faf7f2;
+    --paper: #ffffff;
+    --ink: #1a1a1a;
+    --ink-muted: #5a5a5a;
+    --ink-faint: #8a8a8a;
+    --rule: #e6e0d4;
+    --rule-strong: #c9bfa9;
+    --green: #2d7a4a;
+    --green-bg: #e8f1ea;
+    --amber: #b87614;
+    --amber-bg: #faedd0;
+    --red: #a83232;
+    --red-bg: #f5e0e0;
+    --blue: #2c5d8a;
+    --blue-bg: #e3edf5;
+    --lit: #3a5a8c;
+    --lit-light: #d7e0ed;
+    --num: #d97e1f;
+    --num-light: #f7e2c8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.5;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hindi { font-family: 'Noto Sans Devanagari', sans-serif; }
+  .display { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; letter-spacing: -0.01em; }
+
+  /* Top bar */
+  .topbar {
+    background: var(--navy);
+    color: white;
+    padding: 0.6rem 0;
+    border-bottom: 3px solid var(--saffron);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+  .brand-text small.hindi {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    letter-spacing: 0; font-size: 0.78rem; text-transform: none; opacity: 0.9;
+  }
+  .brand-text { line-height: 1.2; }
+  .brand-text small { font-size: 0.7rem; opacity: 0.75; letter-spacing: 0.08em; display: block; }
+
+  .view-toggle {
+    display: flex; background: rgba(255,255,255,0.08); border-radius: 6px; padding: 3px; gap: 2px;
+  }
+  .view-toggle button {
+    background: transparent; border: none; color: rgba(255,255,255,0.7);
+    padding: 0.4rem 0.9rem; font-family: inherit; font-size: 0.82rem;
+    font-weight: 500; border-radius: 4px; cursor: pointer; transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .view-toggle button:hover { color: white; }
+  .view-toggle button.active { background: white; color: var(--navy); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+  .container { max-width: 1600px; margin: 0 auto; padding: 1.5rem; }
+
+  /* District header */
+  .district-header {
+    padding: 2rem 0 1.5rem; border-bottom: 1px solid var(--rule); margin-bottom: 1.5rem;
+  }
+  .district-header h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 500; color: var(--navy-dark);
+    letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.5rem;
+  }
+  .district-header .hi-subtitle {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-size: 1.1rem; color: var(--ink-muted); margin-bottom: 1rem; font-weight: 400;
+  }
+  .meta-row {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--ink-faint);
+  }
+  .meta-row strong { color: var(--ink-muted); font-weight: 500; }
+  .month-filter {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 0.4rem 0.75rem; font-size: 0.85rem;
+  }
+  .month-filter select {
+    border: none; background: transparent; font-family: inherit; font-size: 0.85rem;
+    color: var(--ink); font-weight: 500; cursor: pointer;
+  }
+  .filter-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+  /* Coverage summary chips (school level) */
+  .cov-summary { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: stretch; }
+  .cov-chip {
+    border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+    padding: 0.4rem 0.85rem; min-width: 92px; line-height: 1.15;
+  }
+  .cov-chip .cov-num { font-size: 1.35rem; font-weight: 700; color: var(--navy-dark); }
+  .cov-chip .cov-lbl { font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+  .cov-chip.is-covered  { background: var(--green-bg); border-color: #bcd9c6; }
+  .cov-chip.is-covered .cov-num  { color: var(--green); }
+  .cov-chip.is-notcov   { background: var(--red-bg); border-color: #e3c2c2; }
+  .cov-chip.is-notcov .cov-num   { color: var(--red); }
+
+  /* KPI section */
+  .kpi-section { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; }
+  .kpi-nav {
+    display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 75px; align-self: start;
+  }
+  .kpi-nav-item {
+    text-align: left; background: transparent; border: none;
+    padding: 0.75rem 0.95rem; font-family: inherit; font-size: 0.88rem;
+    font-weight: 500; color: var(--ink-muted); cursor: pointer;
+    border-radius: 6px; transition: background 0.15s, color 0.15s; line-height: 1.35;
+  }
+  .kpi-nav-item:hover { background: var(--paper); color: var(--ink); }
+  .kpi-nav-item.active { background: var(--navy); color: white; }
+  .kpi-content {
+    background: var(--paper); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 1.5rem; min-height: 320px;
+    min-width: 0;  /* prevent grid blow-out: lets overflow-x:auto work on children */
+    overflow-x: hidden;
+  }
+  .kpi-panel { display: none; }
+  .kpi-panel.active { display: block; }
+  .kpi-panel h2.display {
+    font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 500;
+    color: var(--navy-dark); margin-bottom: 0.5rem;
+  }
+  .kpi-panel .panel-sub { font-size: 0.85rem; color: var(--ink-faint); margin-bottom: 1rem; }
+  .kpi-placeholder {
+    color: var(--ink-faint); font-size: 0.88rem; padding: 1rem 1.1rem;
+    background: var(--cream); border-radius: 6px; margin-top: 1rem;
+  }
+  @media (max-width: 800px) {
+    .kpi-section { grid-template-columns: 1fr; }
+    .kpi-nav { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 0.25rem; margin-bottom: 0.5rem; }
+    .kpi-nav-item { white-space: nowrap; flex-shrink: 0; }
+  }
+
+  /* Inner subsections */
+  .kpi-subsection { margin-top: 1.75rem; }
+  .kpi-subsection:first-child { margin-top: 0; }
+  .kpi-sub-h {
+    font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 500;
+    color: var(--navy-dark); margin: 0 0 0.85rem;
+    padding-bottom: 0.35rem; border-bottom: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .kpi-sub-h .hi {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-size: 0.78rem; color: var(--ink-faint); font-weight: 400; margin-left: 0.4rem;
+  }
+  .kpi-sub-h .sub-meta {
+    font-family: 'DM Sans', sans-serif; font-size: 0.75rem; color: var(--ink-faint);
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+  }
+
+  /* Tiles */
+  .tile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.6rem; }
+  .tile {
+    background: var(--cream); border-radius: 6px; padding: 0.7rem 0.85rem;
+    border-left: 3px solid var(--saffron);
+  }
+  .tile-label {
+    font-size: 0.72rem; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
+  }
+  .tile-value {
+    font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 500;
+    color: var(--navy-dark); line-height: 1.1;
+  }
+  .tile-sub { font-size: 0.72rem; color: var(--ink-muted); margin-top: 0.15rem; }
+
+  /* Proficiency cards: 3-col layout */
+  .proficiency-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem;
+  }
+  @media (max-width: 700px) { .proficiency-grid { grid-template-columns: 1fr; } }
+  .prof-card {
+    background: var(--cream); border-radius: 6px; padding: 0.95rem 1.1rem;
+    border-top: 3px solid var(--ink-faint);
+  }
+  .prof-card.lit { border-top-color: var(--lit); }
+  .prof-card.num { border-top-color: var(--num); }
+  .prof-card.combined { border-top-color: var(--navy); }
+  .prof-card .label {
+    font-size: 0.78rem; color: var(--ink-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem;
+  }
+  .prof-card .label .hi {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    text-transform: none; letter-spacing: 0; color: var(--ink-faint);
+    font-weight: 400; margin-left: 0.3rem;
+  }
+  .prof-card .big {
+    font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 500;
+    color: var(--navy-dark); line-height: 1.05;
+  }
+  .prof-card .meta { font-size: 0.78rem; color: var(--ink-muted); margin-top: 0.35rem; }
+
+  /* Compare cards (2-col, kept for other uses) */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+  .compare-card {
+    background: var(--cream); border-radius: 6px; padding: 0.95rem 1.1rem;
+    border-top: 3px solid var(--ink-faint);
+  }
+  .compare-card.adopted { border-top-color: var(--green, #2d7a4a); }
+  .compare-card.not-adopted { border-top-color: var(--red, #a83232); }
+  .compare-card .label {
+    font-size: 0.78rem; color: var(--ink-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem;
+  }
+  .compare-card .big {
+    font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 500;
+    color: var(--navy-dark); line-height: 1.05;
+  }
+  .compare-card .meta { font-size: 0.78rem; color: var(--ink-muted); margin-top: 0.35rem; }
+
+  /* Tables */
+  .kpi-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .kpi-table th {
+    text-align: left; font-weight: 500; color: var(--ink-muted);
+    padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule);
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .kpi-table td {
+    padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--rule); color: var(--ink);
+  }
+  .kpi-table tr:last-child td { border-bottom: none; }
+  .kpi-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .kpi-table .pct-cell { font-weight: 500; color: var(--navy-dark); }
+  .kpi-table tr.district-row td {
+    background: var(--cream); font-weight: 500; border-bottom: 2px solid var(--saffron);
+  }
+  .delta {
+    font-size: 0.72rem; margin-left: 0.3rem; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .delta.up   { color: #2d7a4a; }
+  .delta.down { color: #a83232; }
+  .delta.flat { color: var(--ink-faint); }
+
+  /* Skill matrix (block × sub-skill) */
+  .skill-matrix {
+    border-collapse: separate; border-spacing: 2px;
+    width: 100%; table-layout: fixed;
+  }
+  .skill-matrix th {
+    background: var(--navy); color: white; font-weight: 600;
+    text-align: center; vertical-align: middle;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.7rem; text-transform: none; letter-spacing: 0;
+    line-height: 1.18; border-bottom: none;
+    white-space: normal;
+    word-break: normal; overflow-wrap: break-word; hyphens: none;
+    height: 72px;
+  }
+  .skill-matrix th:first-child {
+    text-align: left;
+    width: 135px;
+    padding-left: 0.7rem; font-size: 0.78rem;
+  }
+  .skill-matrix tbody td {
+    border-bottom: none; padding: 0.85rem 0.3rem;
+    vertical-align: middle; text-align: center;
+  }
+  .skill-matrix tbody td:first-child {
+    background: white; font-weight: 500; color: var(--ink);
+    text-align: left; vertical-align: middle;
+    padding: 0.85rem 0.7rem;
+    border-left: 1px solid var(--rule);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    white-space: nowrap; font-size: 0.85rem;
+  }
+  .skill-matrix tbody tr:last-child td:first-child { border-bottom: 1px solid var(--rule); }
+  .skill-matrix tbody tr.district-row td:first-child {
+    background: var(--cream); border-top: 2px solid var(--saffron); border-bottom: 2px solid var(--saffron);
+  }
+  .skill-matrix td.cell {
+    text-align: center; vertical-align: middle;
+    color: white; font-weight: 600;
+    font-size: 0.92rem; font-variant-numeric: tabular-nums;
+    height: 56px;
+  }
+  .skill-matrix td.cell.tier-low    { background: #c62828; }
+  .skill-matrix td.cell.tier-mid    { background: #ef6c5a; }
+  .skill-matrix td.cell.tier-good   { background: #f5a623; }
+  .skill-matrix td.cell.tier-strong { background: #2d7a4a; }
+  .skill-matrix td.cell.tier-na {
+    background: #f0ece2; color: var(--ink-faint); font-weight: 500; font-size: 0.72rem;
+  }
+
+  /* Progress bar */
+  .progress-mini {
+    display: inline-block; width: 60px; height: 5px;
+    background: var(--rule); border-radius: 2.5px; overflow: hidden;
+    margin-right: 0.4rem; vertical-align: middle;
+  }
+  .progress-mini > span { display: block; height: 100%; background: var(--saffron); }
+
+  /* Usage bands - horizontal bar list */
+  .band-list { display: flex; flex-direction: column; gap: 0.45rem; }
+  .band-row {
+    display: grid; grid-template-columns: 90px 1fr 60px;
+    align-items: center; gap: 0.7rem; font-size: 0.83rem;
+  }
+  .band-label { color: var(--ink-muted); }
+  .band-bar { height: 12px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+  .band-bar > span { display: block; height: 100%; background: var(--navy); }
+  .band-count { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* Line chart */
+  .line-chart-wrap { width: 100%; overflow-x: auto; }
+  .line-chart { display: block; width: 100%; min-width: 500px; height: 220px; }
+  .line-chart .axis text {
+    font-family: 'DM Sans', sans-serif; font-size: 11px; fill: var(--ink-muted);
+  }
+  .line-chart .axis line { stroke: var(--rule); }
+  .line-chart .grid line { stroke: var(--rule); stroke-dasharray: 2 3; }
+  .line-chart .data-line { fill: none; stroke: var(--navy); stroke-width: 2; }
+  .line-chart .data-point { fill: var(--saffron); stroke: white; stroke-width: 2; }
+  .line-chart .point-label {
+    font-family: 'DM Sans', sans-serif; font-size: 10px;
+    fill: var(--navy-dark); font-weight: 500;
+  }
+
+  /* SLO-specific */
+  .panel-filters {
+    display: flex; gap: 0.75rem; flex-wrap: wrap;
+    margin: 0.75rem 0 1.25rem; padding: 0.6rem 0.85rem;
+    background: var(--cream); border-radius: 6px; align-items: center;
+  }
+  .panel-filters .pf-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.83rem; }
+  .panel-filters label { color: var(--ink-muted); font-weight: 500; }
+  .panel-filters select {
+    border: 1px solid var(--rule); background: white; font-family: inherit;
+    font-size: 0.85rem; color: var(--ink); font-weight: 500;
+    padding: 0.3rem 0.5rem; border-radius: 4px; cursor: pointer;
+  }
+
+  /* Multi-select checkbox dropdown */
+  .ms-dropdown { position: relative; display: inline-block; }
+  .ms-trigger {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    border: 1px solid var(--rule); background: white; font-family: inherit;
+    font-size: 0.85rem; color: var(--ink); font-weight: 500;
+    padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;
+    min-width: 110px; justify-content: space-between;
+  }
+  .ms-trigger:hover { border-color: var(--rule-strong); }
+  .ms-trigger.open { border-color: var(--navy); }
+  .ms-trigger-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+  .ms-trigger-caret { font-size: 0.7rem; color: var(--ink-muted); }
+  .sort-clear-btn {
+    display: none; background: transparent; border: 1px solid var(--rule-strong);
+    border-radius: 4px; padding: 0.2rem 0.55rem; font-size: 0.72rem;
+    color: var(--ink-faint); cursor: pointer; font-family: inherit; margin-left: 0.5rem;
+  }
+  .sort-clear-btn.visible { display: inline-block; }
+  .sort-clear-btn:hover { background: var(--cream); color: var(--ink); }
+
+  /* Sortable column headers */
+  .schools-table th.sortable {
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  .schools-table th.sortable:hover { background: #dce8f5; }
+  .sort-icon {
+    display: inline-block; margin-left: 4px; font-size: 0.7rem;
+    color: #aab8c8; vertical-align: middle; line-height: 1;
+  }
+  .schools-table th.sort-asc  .sort-icon,
+  .schools-table th.sort-desc .sort-icon { color: var(--navy); }
+  .schools-table th.sort-asc  .sort-icon::after { content: ' ▲'; }
+  .schools-table th.sort-desc .sort-icon::after { content: ' ▼'; }
+  .schools-table th.sortable:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: ' ⇅'; }
+
+  .ms-wrapper { position: relative; display: inline-block; }
+  .ms-btn {
+    border: none; background: transparent; font-family: inherit; font-size: 0.85rem;
+    color: var(--ink); font-weight: 500; cursor: pointer; padding: 0; min-width: 90px;
+    text-align: left;
+  }
+  .ms-btn:hover { color: var(--navy); }
+  .ms-menu {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0;
+    min-width: 100%; background: white;
+    border: 1px solid var(--rule-strong); border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 0.3rem 0; z-index: 50;
+    max-height: 240px; overflow-y: auto;
+  }
+  .ms-menu.open { display: block; }
+  .ms-option {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.35rem 0.7rem; font-size: 0.85rem; color: var(--ink);
+    cursor: pointer; white-space: nowrap; font-weight: 500;
+  }
+  .ms-option:hover { background: var(--cream); }
+  .ms-option input[type="checkbox"] { cursor: pointer; accent-color: var(--navy); margin: 0; }
+
+  /* Competency bars (split by subject) */
+  .comp-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+  .comp-bars.two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem;
+  }
+  @media (max-width: 700px) { .comp-bars.two-col { grid-template-columns: 1fr; } }
+  .comp-row {
+    display: grid; grid-template-columns: 180px 1fr 56px;
+    align-items: center; gap: 0.7rem; font-size: 0.83rem;
+  }
+  .comp-label {
+    color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .comp-label.na { color: var(--ink-faint); font-style: italic; }
+  .comp-track {
+    position: relative; height: 16px; background: var(--rule);
+    border-radius: 3px; overflow: hidden;
+  }
+  .comp-track.na { background: repeating-linear-gradient(45deg, #f0ece2, #f0ece2 4px, #e6e0d4 4px, #e6e0d4 8px); }
+  .comp-fill { display: block; height: 100%; }
+  .comp-fill.lit { background: var(--lit); }
+  .comp-fill.num { background: var(--num); }
+  .comp-pct {
+    text-align: right; font-variant-numeric: tabular-nums;
+    color: var(--navy-dark); font-weight: 500;
+  }
+  .comp-pct.na { color: var(--ink-faint); font-weight: 400; font-size: 0.75rem; }
+  /* District ref line in comp bars */
+  .comp-track .ref-line {
+    position: absolute; top: 0; bottom: 0; width: 1px; background: var(--navy-dark); opacity: 0.5;
+  }
+  .comp-track .ref-line::after {
+    content: ''; position: absolute; top: -3px; left: -2px;
+    width: 0; height: 0; border-left: 2.5px solid transparent;
+    border-right: 2.5px solid transparent; border-top: 3px solid var(--navy-dark);
+  }
+
+  /* Grade comparison view (only when grade = All) */
+  .grade-compare-row {
+    display: grid; grid-template-columns: 180px 1fr 60px;
+    gap: 0.7rem; align-items: center; font-size: 0.82rem;
+    padding: 0.4rem 0; border-bottom: 1px solid var(--rule);
+  }
+  .grade-compare-row:last-child { border-bottom: none; }
+  .grade-compare-row.subject-header {
+    background: var(--cream); border-radius: 4px; padding: 0.4rem 0.6rem;
+    margin: 0.5rem 0 0.2rem; grid-template-columns: 1fr;
+    font-family: 'Fraunces', serif; font-weight: 500;
+    color: var(--navy-dark); border-bottom: none;
+  }
+  .gc-bars { display: flex; flex-direction: column; gap: 3px; }
+  .gc-bar {
+    display: grid; grid-template-columns: 26px 1fr 38px;
+    align-items: center; gap: 0.4rem;
+  }
+  .gc-bar-label {
+    font-size: 0.7rem; color: var(--ink-muted); font-weight: 500;
+    text-align: right; padding-right: 0.2rem;
+  }
+  .gc-bar-track {
+    height: 10px; background: var(--rule); border-radius: 2px; overflow: hidden;
+  }
+  .gc-bar-fill { display: block; height: 100%; }
+  .gc-bar-fill.g1 { background: #7aa3d4; }
+  .gc-bar-fill.g2 { background: var(--lit); }
+  .gc-bar-fill.g3 { background: var(--navy); }
+  .gc-bar-pct {
+    font-size: 0.75rem; font-variant-numeric: tabular-nums;
+    color: var(--ink-muted); text-align: right;
+  }
+  .gc-bar-pct.na { color: var(--ink-faint); font-size: 0.7rem; font-style: italic; }
+  .gc-legend {
+    display: flex; gap: 0.85rem; font-size: 0.72rem; color: var(--ink-muted);
+    margin-bottom: 0.5rem;
+  }
+  .gc-legend .sw { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .gc-legend .sw-box {
+    display: inline-block; width: 12px; height: 12px; border-radius: 2px;
+  }
+
+  /* Color tier legend */
+  .tier-legend {
+    display: flex; gap: 0.7rem; font-size: 0.7rem;
+    color: var(--ink-muted); flex-wrap: wrap; margin-top: 0.5rem;
+  }
+  .tier-legend .tg { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .tier-legend .tg-sw {
+    display: inline-block; width: 11px; height: 11px; border-radius: 2px;
+  }
+
+  /* Block-level header strip */
+  .ops-header {
+    padding: 1.5rem 0 1rem; border-bottom: 1px solid var(--rule); margin-bottom: 1.25rem;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .ops-header h1 {
+    font-family: 'Fraunces', serif; font-size: 1.75rem; font-weight: 500;
+    color: var(--navy-dark); letter-spacing: -0.01em;
+  }
+
+  /* Bottom strip */
+  .bottom-strip {
+    text-align: center; padding: 2rem 1rem 3rem;
+    color: var(--ink-faint); font-size: 0.8rem; border-top: 1px solid var(--rule);
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .comp-row { grid-template-columns: 130px 1fr 48px; font-size: 0.78rem; }
+    .grade-compare-row { grid-template-columns: 130px 1fr 50px; }
+  }
+
+  /* ===== Basti dashboard additions ===== */
+
+  /* Snapshot strip: bigger tiles for top-level stats */
+  .snap-strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.7rem; margin-bottom: 1.5rem;
+  }
+  .snap-tile {
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 0.85rem 1rem; border-top: 3px solid var(--navy);
+  }
+  .snap-tile.nipun   { border-top-color: var(--green); }
+  .snap-tile.madhyam { border-top-color: var(--amber); }
+  .snap-tile.at-risk { border-top-color: var(--red); }
+  .snap-tile.literacy { border-top-color: var(--lit); }
+  .snap-tile.numeracy { border-top-color: var(--num); }
+  .snap-tile.orf     { border-top-color: var(--blue); }
+  .snap-tile .snap-label {
+    font-size: 0.72rem; color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;
+  }
+  .snap-tile .snap-label .hi {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    text-transform: none; letter-spacing: 0; color: var(--ink-faint);
+    font-weight: 400; margin-left: 0.3rem;
+  }
+  .snap-tile .snap-value {
+    font-family: 'Fraunces', serif; font-size: 1.65rem; font-weight: 500;
+    color: var(--navy-dark); line-height: 1.05;
+  }
+  .snap-tile .snap-sub { font-size: 0.72rem; color: var(--ink-muted); margin-top: 0.2rem; }
+
+  /* Score-band pills (NIPUN / Madhyam / At Risk) */
+  .pill {
+    display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 500; line-height: 1.4;
+    border: 1px solid transparent;
+  }
+  .pill.nipun   { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+  .pill.madhyam { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
+  .pill.at-risk { background: var(--red-bg);   color: var(--red);   border-color: var(--red); }
+  .pill.neutral { background: var(--cream);    color: var(--ink-muted); border-color: var(--rule); }
+
+  /* Support-level badges */
+  .support {
+    display: inline-block; padding: 0.18rem 0.5rem; border-radius: 4px;
+    font-size: 0.72rem; font-weight: 500; line-height: 1.3;
+  }
+  .support.immediate { background: var(--red-bg);   color: var(--red); }
+  .support.high      { background: var(--amber-bg); color: var(--amber); }
+  .support.moderate  { background: #fff4d4;         color: #8a6914; }
+  .support.low       { background: var(--green-bg); color: var(--green); }
+
+  /* Status indicators for competency rows */
+  .status-on-track  { color: var(--green); font-weight: 500; }
+  .status-attention { color: var(--amber); font-weight: 500; }
+  .status-priority  { color: var(--red);   font-weight: 600; }
+  .priority-tag {
+    display: inline-block; font-size: 0.68rem; padding: 0.1rem 0.4rem;
+    border-radius: 3px; font-weight: 500; letter-spacing: 0.02em;
+  }
+  .priority-tag.high   { background: var(--red-bg);   color: var(--red); }
+  .priority-tag.mon    { background: var(--amber-bg); color: var(--amber); }
+  .priority-tag.ok     { background: var(--green-bg); color: var(--green); }
+
+  /* Drill-down chip link */
+  .drill-chip {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    background: var(--lit-light); color: var(--navy-dark);
+    padding: 0.2rem 0.55rem; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 500; text-decoration: none;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+  .drill-chip:hover { background: var(--navy); color: white; }
+
+  /* Section legend strip */
+  .legend-strip {
+    background: var(--cream); border-radius: 6px;
+    padding: 0.5rem 0.85rem; font-size: 0.75rem; color: var(--ink-muted);
+    margin-bottom: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.85rem;
+    align-items: center; line-height: 1.5;
+  }
+  .legend-strip strong { color: var(--ink); font-weight: 500; }
+
+  /* Competency breakdown grid (student view) */
+  .comp-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.55rem;
+  }
+  .comp-tile {
+    background: var(--cream); border-radius: 6px;
+    padding: 0.6rem 0.75rem; border-left: 3px solid var(--rule-strong);
+  }
+  .comp-tile.lit { border-left-color: var(--lit); }
+  .comp-tile.num { border-left-color: var(--num); }
+  .comp-tile .ct-label {
+    font-size: 0.7rem; color: var(--ink-muted); margin-bottom: 0.15rem;
+    line-height: 1.2;
+  }
+  .comp-tile .ct-value {
+    font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 500;
+    color: var(--navy-dark); line-height: 1.1;
+  }
+  .comp-tile .ct-value.na { color: var(--ink-faint); font-size: 0.95rem; font-style: italic; }
+
+  /* Student status banner */
+  .status-banner {
+    display: flex; align-items: center; gap: 1.25rem;
+    padding: 1rem 1.25rem; border-radius: 8px;
+    background: var(--cream); border: 1px solid var(--rule);
+    margin-bottom: 1.25rem;
+  }
+  .status-banner .sb-pill {
+    font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 500;
+    padding: 0.45rem 1rem; border-radius: 6px; line-height: 1.1;
+  }
+  .status-banner .sb-pill.nipun   { background: var(--green-bg); color: var(--green); }
+  .status-banner .sb-pill.madhyam { background: var(--amber-bg); color: var(--amber); }
+  .status-banner .sb-pill.at-risk { background: var(--red-bg);   color: var(--red); }
+  .status-banner .sb-meta {
+    display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--ink-muted);
+    flex-wrap: wrap;
+  }
+  .status-banner .sb-meta strong { color: var(--ink); display: block; font-weight: 500; font-size: 0.92rem; }
+
+  /* Clickable school name link */
+  .school-link {
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .school-link:hover { color: var(--navy); }
+
+  /* Priority badge (school-level) */
+  .priority-badge {
+    display: inline-block; font-size: 0.65rem; font-weight: 600;
+    padding: 0.1rem 0.45rem; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    vertical-align: middle; margin-left: 0.4rem; white-space: nowrap;
+  }
+  .priority-badge.p-low  { background: var(--green-bg); color: var(--green); border: 1px solid #bcd9c6; }
+  .priority-badge.p-med  { background: var(--amber-bg); color: var(--amber); border: 1px solid #e8cfa0; }
+  .priority-badge.p-high { background: var(--red-bg);   color: var(--red);   border: 1px solid #e3c2c2; }
+
+  /* Helper - clickable row affordance */
+  .kpi-table tr.clickable { cursor: pointer; }
+  .kpi-table tr.clickable:hover td { background: var(--cream); }
+
+  /* --- Schools table (wide, scrollable, with toggleable detail columns) --- */
+  .schools-table-wrap {
+    overflow: auto;
+    max-height: 78vh;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+  /* Sticky column-label header row (stays on vertical scroll).
+     Opaque background is required so scrolling row content doesn't show through
+     the translucent focus/detail tints. */
+  .schools-table thead tr.head-row th { position: sticky; top: 0; z-index: 5; background: var(--cream); }
+  /* Frozen identity columns (stay on horizontal scroll) — left offsets set in JS */
+  .schools-table .frozen-col { z-index: 4; }
+  .schools-table tbody .frozen-col { background: #fff; }
+  .schools-table tbody tr:hover td.frozen-col { background: var(--cream); }
+  .schools-table thead tr.head-row th.frozen-col { background: var(--cream); z-index: 6; }
+  .schools-table thead tr.group-row th.gb-freeze { background: var(--cream); }
+  .schools-table thead tr.group-row th.gb-freeze.frozen-col { z-index: 6; }
+  .schools-table .frozen-col.freeze-edge { border-right: 2px solid var(--rule-strong); }
+  .schools-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .schools-table th,
+  .schools-table td {
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .schools-table thead th {
+    background: var(--cream);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    text-align: left;
+    border-bottom: 2px solid var(--rule-strong);
+  }
+  .schools-table thead tr.group-row th {
+    background: var(--navy);
+    color: white;
+    text-align: center;
+    font-size: 0.74rem;
+    padding: 0.45rem 0.5rem;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .schools-table thead tr.group-row th.group-blank { background: transparent; }
+  .schools-table thead tr.group-row th.group-lit  { background: var(--lit); }
+  .schools-table thead tr.group-row th.group-num  { background: var(--num); }
+  .schools-table tbody tr:hover td { background: var(--cream); }
+  .schools-table tbody tr:last-child td { border-bottom: none; }
+  .schools-table .num {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Center the Status column (everything Status → last competency is centered) */
+  .schools-table .col-status { text-align: center; }
+  /* Clickable school rows (drill-through to student view) */
+  .schools-table tbody tr.clickable { cursor: pointer; }
+  .schools-table tbody tr.clickable:hover td { background: var(--cream); }
+  /* UDISE search box */
+  .udise-search {
+    border: 1px solid var(--rule); border-radius: 6px; background: var(--paper);
+    padding: 0.35rem 0.6rem; font-family: inherit; font-size: 0.82rem; color: var(--ink);
+    width: 180px; margin-left: 0.7rem; vertical-align: middle; text-transform: none;
+  }
+  .udise-search:focus { outline: none; border-color: var(--navy-light); }
+
+  /* District Overview KPI cards */
+  .ov-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+    gap: 1rem; margin: 1.1rem 0 1.6rem;
+  }
+  .ov-card {
+    background: #fff; border: 1px solid var(--rule); border-top: 3px solid var(--navy);
+    border-radius: 8px; padding: 0.95rem 1.05rem;
+  }
+  .ov-card .ov-num { font-size: 1.85rem; font-weight: 700; color: var(--navy-dark); line-height: 1.1; }
+  .ov-card .ov-num .ov-of { font-size: 0.95rem; font-weight: 500; color: var(--ink-faint); }
+  .ov-card .ov-lbl {
+    font-size: 0.74rem; color: var(--ink-muted); margin-top: 0.3rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .ov-card .ov-sub { font-size: 0.76rem; color: var(--ink-faint); margin-top: 0.35rem; line-height: 1.6; }
+  .ov-card.is-good { border-top-color: var(--green); }
+  .ov-card.is-good .ov-num { color: var(--green); }
+  .ov-card.is-bad  { border-top-color: var(--red); }
+  .ov-card.is-bad  .ov-num { color: var(--red); }
+  .ov-card.is-approaching { border-top-color: var(--amber); }
+  .ov-card.is-approaching .ov-num { color: var(--amber); }
+  .ov-loading { color: var(--ink-faint); padding: 1rem 0; font-size: 0.9rem; }
+  .schools-table td.lit-detail,
+  .schools-table th.lit-detail { background: rgba(58, 90, 140, 0.05); }
+  .schools-table td.num-detail,
+  .schools-table th.num-detail { background: rgba(217, 126, 31, 0.05); }
+  .schools-table tbody tr:hover td.lit-detail { background: rgba(58, 90, 140, 0.12); }
+  .schools-table tbody tr:hover td.num-detail { background: rgba(217, 126, 31, 0.12); }
+
+  /* Count column accents */
+  .schools-table td.col-nipun-count { color: var(--green); font-weight: 500; }
+  .schools-table td.col-at-risk     { color: var(--red);   font-weight: 500; }
+
+  /* Focus competency — wider, allow wrap */
+  .schools-table th.col-focus,
+  .schools-table td.col-focus {
+    white-space: normal;
+    min-width: 160px;
+    max-width: 240px;
+    border-left: 2px solid var(--saffron);
+    background: rgba(217, 126, 31, 0.03);
+    font-size: 0.78rem;
+  }
+
+  /* Hide detail columns + group row when details-hidden class is on */
+  .schools-table.details-hidden .col-detail,
+  .schools-table.details-hidden .group-row { display: none; }
+
+  /* Status pill */
+  .status-pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--rule);
+    color: var(--ink-muted);
+  }
+  .status-pill.s-nipun     { background: var(--green-bg); color: var(--green); }
+  .status-pill.s-almost    { background: var(--blue-bg);  color: var(--blue); }
+  .status-pill.s-performer { background: var(--amber-bg); color: var(--amber); }
+  .status-pill.s-aspirant  { background: var(--red-bg);   color: var(--red); }
+  .status-pill.s-approaching { background: var(--amber-bg); color: var(--amber); }
+  .status-pill.s-at-risk     { background: var(--red-bg);   color: var(--red); }
+
+  /* Overall % cell colouring: green only when both subjects clear 75% */
+  .overall-green { color: var(--green); font-weight: 700; }
+  .overall-red   { color: var(--red);   font-weight: 700; }
+
+  /* Toggle button (for table column toggle) */
+  .toggle-btn {
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+  .toggle-btn:hover { background: var(--cream); }
+  .toggle-btn.active {
+    background: var(--navy);
+    color: white;
+    border-color: var(--navy);
+  }
+
+  /* Hide school-context columns (UDISE, School Name, Block) when toggle is off */
+  .schools-table.school-ctx-hidden .col-school-ctx { display: none; }
+
+  /* Download button group */
+  .dl-group {
+    display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+  }
+  .dl-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: var(--paper); border: 1px solid var(--rule-strong);
+    border-radius: 4px; padding: 0.35rem 0.75rem;
+    font-size: 0.78rem; cursor: pointer; font-family: inherit;
+    color: var(--ink); transition: all 0.15s; font-weight: 500;
+  }
+  .dl-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+  .dl-btn .dl-icon { font-size: 0.9rem; }
+
+  /* Proficiency tooltip */
+  .info-chip {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.72rem; color: var(--ink-faint); cursor: help;
+    background: var(--cream); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 0.1rem 0.45rem; vertical-align: middle;
+    position: relative;
+  }
+  .info-chip:hover .info-tip {
+    display: block;
+  }
+  .info-tip {
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%); background: var(--navy-dark); color: white;
+    font-size: 0.72rem; padding: 0.5rem 0.75rem; border-radius: 5px;
+    width: 280px; line-height: 1.5; z-index: 200; white-space: normal;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  }
+  .info-tip::after {
+    content: ''; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--navy-dark);
+  }
+
+  .schools-empty {
+    text-align: center;
+    padding: 1.75rem;
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+
+  /* API Diagnostic panel */
+  .diag-panel {
+    background: #fff8f0; border: 1.5px solid #e8a24a; border-radius: 8px;
+    padding: 1rem 1.25rem; margin: 1rem 0; font-size: 0.83rem; line-height: 1.6;
+  }
+  .diag-panel h4 { color: #a83232; margin: 0 0 0.5rem; font-size: 0.95rem; }
+  .diag-panel .diag-row { display: flex; gap: 0.5rem; align-items: flex-start; margin-bottom: 0.35rem; }
+  .diag-panel .diag-label { color: #5a5a5a; font-weight: 600; min-width: 110px; flex-shrink: 0; }
+  .diag-panel .diag-val { color: #1a1a1a; word-break: break-all; }
+  .diag-panel .diag-val.ok   { color: #2d7a4a; font-weight: 600; }
+  .diag-panel .diag-val.fail { color: #a83232; font-weight: 600; }
+  .diag-panel .diag-body {
+    background: #f5f0e8; border-radius: 4px; padding: 0.5rem 0.75rem;
+    font-family: monospace; font-size: 0.75rem; white-space: pre-wrap;
+    word-break: break-all; max-height: 140px; overflow-y: auto;
+    margin-top: 0.5rem; color: #1a1a1a;
+  }
+  .diag-panel .diag-actions { margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .diag-panel .diag-btn {
+    background: var(--navy); color: white; border: none; border-radius: 4px;
+    padding: 0.35rem 0.85rem; font-size: 0.78rem; cursor: pointer; font-family: inherit;
+  }
+  .diag-panel .diag-btn:hover { background: var(--navy-dark); }
+  .diag-panel .diag-btn.sec { background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+  .diag-panel .diag-steps { margin: 0.75rem 0 0; padding-left: 1.25rem; color: #5a5a5a; }
+  .diag-panel .diag-steps li { margin-bottom: 0.25rem; }
+  .diag-panel .diag-steps code { background: #ede8de; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.78rem; }
+
+  /* KPI card info button + tooltip */
+  .card-info-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--rule); color: var(--ink-muted);
+    font-size: 0.68rem; cursor: help; vertical-align: middle;
+    margin-left: 0.25rem; position: relative; line-height: 1;
+    border: 1px solid var(--rule-strong); transition: background 0.12s;
+    font-style: normal;
+  }
+  .card-info-btn:hover, .card-info-btn:focus {
+    background: var(--navy); color: white; border-color: var(--navy); outline: none;
+  }
+  .card-info-btn:hover .card-info-tip,
+  .card-info-btn:focus .card-info-tip {
+    display: block;
+  }
+  .card-info-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy-dark);
+    color: white;
+    font-size: 0.73rem;
+    font-weight: 400;
+    line-height: 1.55;
+    padding: 0.65rem 0.85rem;
+    border-radius: 6px;
+    width: 280px;
+    white-space: normal;
+    z-index: 300;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    pointer-events: none;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .card-info-tip::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--navy-dark);
+  }
+  /* If card is in the last 2 columns, flip tooltip to the left */
+  .ov-card:nth-last-child(-n+2) .card-info-tip {
+    left: auto; right: 0; transform: none;
+  }
+  .ov-card:nth-last-child(-n+2) .card-info-tip::after {
+    left: auto; right: 14px; transform: none;
+  }
+
+  /* ===== Definitions glossary ===== */
+  .defs-section {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .defs-heading {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--navy-dark);
+    letter-spacing: -0.01em;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .defs-heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+    margin-left: 0.5rem;
+  }
+  .defs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .defs-table tr {
+    border-bottom: 1px solid var(--rule);
+  }
+  .defs-table tr:last-child {
+    border-bottom: none;
+  }
+  .defs-table td {
+    padding: 0.55rem 0.75rem;
+    vertical-align: top;
+    line-height: 1.55;
+    color: var(--ink-muted);
+  }
+  .defs-table td:first-child {
+    width: 160px;
+    padding-left: 0;
+    white-space: nowrap;
+  }
+  .defs-table td strong { color: var(--ink); font-weight: 600; }
+  .def-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.55rem;
+    border-radius: 3px;
+    line-height: 1.6;
+    white-space: nowrap;
+  }
+  .def-badge.b-nipun    { background: var(--green-bg);  color: var(--green); }
+  .def-badge.b-approach { background: var(--amber-bg);  color: var(--amber); }
+  .def-badge.b-risk     { background: var(--red-bg);    color: var(--red); }
+  .def-badge.b-orf      { background: var(--blue-bg);   color: var(--blue); }
+  .def-badge.b-lit      { background: var(--lit-light); color: var(--lit); }
+  .def-badge.b-num      { background: var(--num-light); color: var(--num); }
+  .def-badge.b-pri-high { background: var(--red-bg);    color: var(--red); }
+  .def-badge.b-pri-med  { background: var(--amber-bg);  color: var(--amber); }
+  .def-badge.b-pri-low  { background: var(--green-bg);  color: var(--green); }
+  .def-badge.b-navy     { background: var(--blue-bg);   color: var(--navy); }
+
+  @media print {
+    .topbar, .view-toggle, .panel-filters { display: none; }
+    body { background: white; }
+    .page { display: block !important; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-text">
+        NIPUN Basti
+      </div>
+    </div>
+    <div class="view-toggle">
+      <button class="active" onclick="showView(event, 'overview')">Overview</button>
+      <button onclick="showView(event, 'school')">School Level Overview</button>
+      <button onclick="showView(event, 'student')">Student Level Overview</button>
+    </div>
+  </div>
+</header>
+
+<!-- ================== OVERVIEW (DISTRICT + BLOCK) ================== -->
+<div class="page active" id="page-overview">
+  <div class="container">
+
+    <div class="district-header">
+      <h1 class="display">District Overview · <span>Basti</span></h1>
+
+      <div class="meta-row">
+        <div class="meta-counts" id="ov-context"></div>
+        <div class="filter-group">
+          <div class="month-filter">
+            <span>School type:</span>
+            <select id="ov-school-type">
+              <option value="all" selected>All</option>
+              <option value="RMEAL">RMEAL</option>
+              <option value="Non-RMEAL">Non RMEAL</option>
+            </select>
+          </div>
+          <div class="month-filter" style="position:relative;">
+            <span>Grade:</span>
+            <div class="ms-wrapper" id="ov-grade-ms">
+              <button type="button" class="ms-btn" id="ov-grade-btn" onclick="toggleMs('ov-grade-ms')">All Grades ▾</button>
+              <div class="ms-menu" id="ov-grade-menu">
+                <label class="ms-option"><input type="checkbox" value="1" onchange="onMsChange('ov-grade-ms')"> Grade 1</label>
+                <label class="ms-option"><input type="checkbox" value="2" onchange="onMsChange('ov-grade-ms')"> Grade 2</label>
+                <label class="ms-option"><input type="checkbox" value="3" onchange="onMsChange('ov-grade-ms')"> Grade 3</label>
+              </div>
+            </div>
+          </div>
+          <div class="month-filter">
+            <span>Month:</span>
+            <select id="ov-month">
+              <option value="all" selected>All Months</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Quarter:</span>
+            <select id="ov-quarter">
+              <option value="all">All Quarters</option>
+              <option value="Q1" selected>Q1</option>
+              <option value="Q2">Q2</option>
+              <option value="Q3">Q3</option>
+              <option value="Q4">Q4</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== KPI CARDS ============== -->
+    <div class="ov-cards" id="ov-cards"></div>
+
+    <!-- ============== BLOCK-WISE TABLE ============== -->
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h">
+        <span>Block-wise Performance <button class="sort-clear-btn" id="sort-clear-ov" onclick="clearSort('ov-blocks-table','sort-clear-ov')">✕ Clear sort</button></span>
+        <div class="dl-group">
+          <button class="dl-btn" type="button" onclick="downloadBlockCSV()"><span class="dl-icon">⬇</span> Excel (CSV)</button>
+          <button class="dl-btn" type="button" onclick="downloadBlockPDF()"><span class="dl-icon">⬇</span> PDF</button>
+        </div>
+      </h3>
+      <div class="schools-table-wrap">
+        <table class="schools-table" id="ov-blocks-table">
+          <thead>
+            <tr class="group-row">
+              <th colspan="2" class="group-blank gb-freeze"></th>
+              <th colspan="7" class="group-blank"></th>
+            </tr>
+            <tr class="head-row" id="ov-blocks-head">
+              <th>S.No.</th>
+              <th class="sortable" data-key="block">Block<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="coveredSchools">Schools (Covered / Total)<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="totalStudents">Total Students<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="nipunStudents">NIPUN #<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="approachingStudents">Approaching #<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="atRisk">At Risk #<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="literacyPct">Literacy %<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="numeracyPct">Numeracy %<span class="sort-icon"></span></th>
+            </tr>
+          </thead>
+          <tbody id="ov-blocks-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  
+
+<!-- ===== DEFINITIONS GLOSSARY (shown on all pages) ===== -->
+<div class="defs-section">
+  <div class="defs-heading">Definitions &amp; Calculation Reference</div>
+  <table class="defs-table">
+    <tbody>
+      <tr>
+        <td><span class="def-badge b-lit">Literacy %</span></td>
+        <td>Percentage of applicable literacy sub-competencies a student (or group) has passed. A competency is <strong>passed</strong> if score ≥ 75% of its maximum marks. Literacy % = (competencies passed ÷ total applicable literacy competencies) × 100. Sub-competencies: Listening Comprehension, Oral Vocab, Picture Comprehension, Letter ID, Word Reading, Sentence Reading, Reading Comprehension, Letter / Word / Sentence Writing. <em>ORF is excluded from this calculation.</em></td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-num">Numeracy %</span></td>
+        <td>Percentage of applicable numeracy sub-competencies a student (or group) has passed (score ≥ 75% of max marks per competency). Numeracy % = (competencies passed ÷ total applicable numeracy competencies) × 100. Sub-competencies: Number ID, Place Value, Pattern, Addition, Subtraction, Word Problems, Measurement, Multiplication, Shapes, Data Handling.</td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-orf">ORF</span></td>
+        <td><strong>Oral Reading Fluency</strong> — measured in correct words read per minute (cwpm). Shown as a raw score; excluded from Literacy % calculation. Grade-wise NIPUN thresholds:
+          <br>· <strong>Grade 2</strong> — NIPUN: ≥ 45 cwpm &nbsp;|&nbsp; Approaching: 30–44 cwpm &nbsp;|&nbsp; At Risk: &lt;30 cwpm
+          <br>· <strong>Grade 3</strong> — NIPUN: ≥ 60 cwpm &nbsp;|&nbsp; Approaching: 45–59 cwpm &nbsp;|&nbsp; At Risk: &lt;45 cwpm
+          <br>Grade 1 students are not assessed on ORF.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-nipun">NIPUN</span></td>
+        <td>Student is <strong>proficient in both</strong> Literacy and Numeracy — Literacy % ≥ 75 <strong>AND</strong> Numeracy % ≥ 75. The student has passed ≥ 75% of competencies in each subject independently.</td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-approach">Approaching</span></td>
+        <td>Student is proficient in <strong>at least one</strong> subject (Literacy or Numeracy) but not both — Literacy % or Numeracy % is between 50%–74% in at least one area. Needs targeted support to cross the NIPUN threshold.</td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-risk">At Risk</span></td>
+        <td>Student has <strong>at least one subject below</strong> the proficiency threshold — scored below 50% on at least one competency area (Literacy or Numeracy). Requires urgent, intensive intervention.</td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-pri-high">High Priority</span></td>
+        <td><strong>School-level intervention priority.</strong> Fewer than 40% of assessed students in the school are NIPUN. Requires immediate and intensive instructional support.</td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-pri-med">Medium Priority</span></td>
+        <td><strong>School-level intervention priority.</strong> Between 40%–74% of assessed students in the school are NIPUN. Needs close monitoring and targeted practice to push students across the threshold.</td>
+      </tr>
+      <tr>
+        <td><span class="def-badge b-pri-low">Low Priority</span></td>
+        <td><strong>School-level intervention priority.</strong> 75% or more of assessed students in the school are NIPUN. School is on track — continue maintaining quality and address remaining gaps.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+  </div>
+</div>
+
+
+
+<!-- ================== SCHOOL LEVEL OVERVIEW ================== -->
+<div class="page" id="page-school">
+  <div class="container">
+
+    <div class="district-header">
+      <h1 class="display">School Level Overview · <span id="s-scope-label">Basti</span></h1>
+
+      <div class="meta-row">
+        <div class="cov-summary">
+          <div class="cov-chip">
+            <div class="cov-num" id="s-cov-total">—</div>
+            <div class="cov-lbl">Schools</div>
+          </div>
+          <div class="cov-chip is-covered">
+            <div class="cov-num" id="s-cov-covered">—</div>
+            <div class="cov-lbl">Covered</div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="month-filter">
+            <span>Block:</span>
+            <select id="s-block">
+              <option value="all" selected>All Blocks (District)</option>
+              <!-- Block options populated via Apps Script -->
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>School type:</span>
+            <select id="s-school-type">
+              <option value="all" selected>All</option>
+              <option value="RMEAL">RMEAL</option>
+              <option value="Non-RMEAL">Non RMEAL</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Grade:</span>
+            <select id="s-grade">
+              <option value="all" selected>All Grades</option>
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Month:</span>
+            <select id="s-month">
+              <option value="all" selected>All Months</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Quarter:</span>
+            <select id="s-quarter">
+              <option value="all">All Quarters</option>
+              <option value="Q1" selected>Q1</option>
+              <option value="Q2">Q2</option>
+              <option value="Q3">Q3</option>
+              <option value="Q4">Q4</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== KPI CARDS ============== -->
+    <div class="ov-cards" id="s-cards"></div>
+
+    <!-- ============== SCHOOLS TABLE ============== -->
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h">
+        <span>Schools <button class="sort-clear-btn" id="sort-clear-s" onclick="clearSort('s-schools-table','sort-clear-s')">✕ Clear sort</button></span>
+        <div class="dl-group">
+          <button id="s-toggle-details" class="toggle-btn" type="button">Show Subject-level Details</button>
+          <button class="dl-btn" type="button" onclick="downloadSchoolCSV()"><span class="dl-icon">⬇</span> Excel (CSV)</button>
+          <button class="dl-btn" type="button" onclick="downloadSchoolPDF()"><span class="dl-icon">⬇</span> PDF</button>
+        </div>
+      </h3>
+      <div class="schools-table-wrap">
+        <table class="schools-table details-hidden" id="s-schools-table">
+          <thead>
+            <tr class="group-row">
+              <th colspan="5" class="group-blank gb-freeze"></th>
+              <th colspan="7" class="group-blank"></th>
+              <th colspan="11" class="group-lit">Literacy</th>
+              <th colspan="10" class="group-num">Numeracy</th>
+              <th colspan="1"  class="group-blank"></th>
+            </tr>
+            <tr class="head-row" id="s-schools-head">
+              <th>S.No.</th>
+              <th class="sortable" data-key="udise">UDISE<span class="sort-icon"></span></th>
+              <th class="sortable" data-key="schoolName">School Name<span class="sort-icon"></span></th>
+              <th class="sortable" data-key="block">Block<span class="sort-icon"></span></th>
+              <th class="sortable" data-key="status">Status<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="totalStudents">Total Students<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="nipunStudents">NIPUN Students<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="approachingStudents">Approaching<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="atRisk">At Risk<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="literacyPct">Literacy %<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="numeracyPct">Numeracy %<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="overallPct">Overall %<span class="sort-icon"></span></th>
+              <th class="num col-detail lit-detail">Listening Comp.</th>
+              <th class="num col-detail lit-detail">Oral Vocab</th>
+              <th class="num col-detail lit-detail">Picture Comp.</th>
+              <th class="num col-detail lit-detail">Letter Identification</th>
+              <th class="num col-detail lit-detail">Word Reading</th>
+              <th class="num col-detail lit-detail">Sentence Reading</th>
+              <th class="num col-detail lit-detail">ORF</th>
+              <th class="num col-detail lit-detail">Reading Comp.</th>
+              <th class="num col-detail lit-detail">Letter Writing</th>
+              <th class="num col-detail lit-detail">Word Writing</th>
+              <th class="num col-detail lit-detail">Sentence Writing</th>
+              <th class="num col-detail num-detail">Number ID</th>
+              <th class="num col-detail num-detail">Place Value</th>
+              <th class="num col-detail num-detail">Pattern</th>
+              <th class="num col-detail num-detail">Addition</th>
+              <th class="num col-detail num-detail">Subtraction</th>
+              <th class="num col-detail num-detail">Word Problems</th>
+              <th class="num col-detail num-detail">Measurement</th>
+              <th class="num col-detail num-detail">Multiplication</th>
+              <th class="num col-detail num-detail">Shapes</th>
+              <th class="num col-detail num-detail">Data Handling</th>
+              <th class="col-focus">Focus Competency</th>
+            </tr>
+          </thead>
+          <tbody id="s-schools-tbody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================== STUDENT LEVEL OVERVIEW ================== -->
+<div class="page" id="page-student">
+  <div class="container">
+
+    <div class="district-header">
+      <h1 class="display">Student Level Overview · <span id="st-scope-label">Basti</span></h1>
+
+      <div class="meta-row">
+        <div class="filter-group">
+          <div class="month-filter">
+            <span>Block:</span>
+            <select id="st-block">
+              <option value="all" selected>All Blocks (District)</option>
+              <!-- Block options populated via Apps Script -->
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>School type:</span>
+            <select id="st-school-type">
+              <option value="all" selected>All</option>
+              <option value="RMEAL">RMEAL</option>
+              <option value="Non-RMEAL">Non RMEAL</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Grade:</span>
+            <select id="st-grade">
+              <option value="all" selected>All Grades</option>
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Month:</span>
+            <select id="st-month">
+              <option value="all" selected>All Months</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Quarter:</span>
+            <select id="st-quarter">
+              <option value="all">All Quarters</option>
+              <option value="Q1" selected>Q1</option>
+              <option value="Q2">Q2</option>
+              <option value="Q3">Q3</option>
+              <option value="Q4">Q4</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== KPI CARDS ============== -->
+    <div class="ov-cards" id="st-cards"></div>
+
+    <!-- ============== STUDENTS TABLE ============== -->
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h">
+        <span>Students <button class="sort-clear-btn" id="sort-clear-st" onclick="clearSort('st-students-table','sort-clear-st')">✕ Clear sort</button>
+          <input id="st-udise-search" type="search" class="udise-search" placeholder="Search UDISE…" autocomplete="off">
+        </span>
+        <div class="dl-group">
+          <button id="st-toggle-school-ctx" class="toggle-btn" type="button" onclick="toggleSchoolCtx()">Show School Details</button>
+          <button id="st-toggle-details" class="toggle-btn" type="button">Show Subject-level Details</button>
+          <button class="dl-btn" type="button" onclick="downloadStudentCSV()"><span class="dl-icon">⬇</span> Excel (CSV)</button>
+          <button class="dl-btn" type="button" onclick="downloadStudentPDF()"><span class="dl-icon">⬇</span> PDF</button>
+        </div>
+      </h3>
+      <div class="schools-table-wrap">
+        <table class="schools-table details-hidden school-ctx-hidden" id="st-students-table">
+          <thead>
+            <tr class="group-row">
+              <th colspan="3" class="group-blank gb-freeze"></th>
+              <th colspan="3" class="group-blank col-school-ctx"></th>
+              <th colspan="5" class="group-blank"></th>
+              <th colspan="11" class="group-lit">Literacy</th>
+              <th colspan="10" class="group-num">Numeracy</th>
+              <th colspan="1"  class="group-blank"></th>
+            </tr>
+            <tr class="head-row" id="st-students-head">
+              <th>S.No.</th>
+              <th class="sortable" data-key="studentName">Student Name<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="grade">Grade<span class="sort-icon"></span></th>
+              <th class="col-school-ctx sortable" data-key="udise">UDISE<span class="sort-icon"></span></th>
+              <th class="col-school-ctx sortable" data-key="schoolName">School Name<span class="sort-icon"></span></th>
+              <th class="col-school-ctx sortable" data-key="block">Block<span class="sort-icon"></span></th>
+              <th class="col-status sortable" data-key="status">Status<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="atRiskCount">At-Risk Comp.<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="literacyPct">Literacy %<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="numeracyPct">Numeracy %<span class="sort-icon"></span></th>
+              <th class="num sortable" data-key="overallPct">Overall %<span class="sort-icon"></span></th>
+              <!-- Literacy detail columns -->
+              <th class="num col-detail lit-detail">Listening Comp.</th>
+              <th class="num col-detail lit-detail">Oral Vocab</th>
+              <th class="num col-detail lit-detail">Picture Comp.</th>
+              <th class="num col-detail lit-detail">Letter Identification</th>
+              <th class="num col-detail lit-detail">Word Reading</th>
+              <th class="num col-detail lit-detail">Sentence Reading</th>
+              <th class="num col-detail lit-detail">ORF</th>
+              <th class="num col-detail lit-detail">Reading Comp.</th>
+              <th class="num col-detail lit-detail">Letter Writing</th>
+              <th class="num col-detail lit-detail">Word Writing</th>
+              <th class="num col-detail lit-detail">Sentence Writing</th>
+              <!-- Numeracy detail columns -->
+              <th class="num col-detail num-detail">Number ID</th>
+              <th class="num col-detail num-detail">Place Value</th>
+              <th class="num col-detail num-detail">Pattern</th>
+              <th class="num col-detail num-detail">Addition</th>
+              <th class="num col-detail num-detail">Subtraction</th>
+              <th class="num col-detail num-detail">Word Problems</th>
+              <th class="num col-detail num-detail">Measurement</th>
+              <th class="num col-detail num-detail">Multiplication</th>
+              <th class="num col-detail num-detail">Shapes</th>
+              <th class="num col-detail num-detail">Data Handling</th>
+              <!-- Always-visible: Focus Competency at the end -->
+              <th class="col-focus">Focus Competency</th>
+            </tr>
+          </thead>
+          <tbody id="st-students-tbody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="bottom-strip">
+  NIPUN Basti · School Support Program Dashboard<br><br>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — Google Apps Script endpoint for Basti
+// ============================================================
+// Both views are served by the new web app: School via dataset=schools, Student via dataset=students.
+const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbyV6cf_LIJr2pai2qhtw6sCk8nCHN62-ONnPh5pzIT7Y5Jl32iwwApj-mrxkY3ruhbW/exec';
+const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbyV6cf_LIJr2pai2qhtw6sCk8nCHN62-ONnPh5pzIT7Y5Jl32iwwApj-mrxkY3ruhbW/exec';
+
+// Indian-format number helper.
+const fmtIN = new Intl.NumberFormat('en-IN');
+
+// ============================================================
+// View switching
+// ============================================================
+function showView(evt, view) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + view).classList.add('active');
+  document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+  if (evt && evt.currentTarget) {
+    evt.currentTarget.classList.add('active');
+  } else {
+    // Programmatic switch: activate the matching toggle button.
+    document.querySelectorAll('.view-toggle button').forEach(b => {
+      const oc = b.getAttribute('onclick') || '';
+      if (oc.indexOf("'" + view + "'") !== -1) b.classList.add('active');
+    });
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Tables measured while their page was hidden have 0-width columns; recompute now that it's visible.
+  if (view === 'student') {
+    const t = document.getElementById('st-students-table');
+    const ctxHidden = t && t.classList.contains('school-ctx-hidden');
+    setupStickyTable('st-students-table', ctxHidden ? 3 : 6);
+  }
+  else if (view === 'school') setupStickyTable('s-schools-table', 5);
+  else if (view === 'overview') { setupStickyTable('ov-blocks-table', 2); }
+}
+
+// Drill-through: click a school row -> Student view, filtered to that school's UDISE.
+function viewSchoolStudents(udise) {
+  if (!udise) return;
+  const schoolQuarter = document.getElementById('s-quarter').value;
+  showView(null, 'student');
+  // Clear other student filters so the school's students always show.
+  document.getElementById('st-block').value = 'all';
+  document.getElementById('st-school-type').value = 'all';
+  document.getElementById('st-grade').value = 'all';
+  document.getElementById('st-udise-search').value = udise;
+  const stQ = document.getElementById('st-quarter');
+  if (stQ.value !== schoolQuarter) {
+    stQ.value = schoolQuarter;     // student data is quarter-scoped server-side
+    loadStudentData();             // re-fetch; ends in applyStudentFilters() (reads the UDISE box)
+  } else {
+    applyStudentFilters();
+  }
+}
+
+// ============================================================
+// DISTRICT OVERVIEW — block-level data wiring
+// ============================================================
+let ALL_BLOCKS = [];
+
+function getOverviewFilters() {
+  const checked = [...document.querySelectorAll('#ov-grade-menu input:checked')].map(c => c.value);
+  const monthEl = document.getElementById('ov-month');
+  return {
+    schoolType: document.getElementById('ov-school-type').value,
+    grade:      checked.length === 0 ? 'all' : (checked.length === 1 ? checked[0] : checked.join(',')),
+    quarter:    document.getElementById('ov-quarter').value,
+    month:      monthEl ? monthEl.value : 'all'
+  };
+}
+
+async function loadOverviewData() {
+  const cards = document.getElementById('ov-cards');
+  cards.innerHTML = '<div class="ov-loading">Loading district summary…</div>';
+  try {
+    const f = getOverviewFilters();
+    const [blockResp, gradeResp, studentResp] = await Promise.all([
+      fetchData({ dataset: 'blocks',   quarter: f.quarter, grade: f.grade, schoolType: f.schoolType, month: f.month }),
+      fetchData({ dataset: 'grades',   quarter: f.quarter, schoolType: f.schoolType, month: f.month }),
+      fetchData({ dataset: 'students', quarter: f.quarter, month: f.month })
+    ]);
+    if (!blockResp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(blockResp) });
+    ALL_BLOCKS = Array.isArray(blockResp.data) ? blockResp.data : [];
+    const grades   = (gradeResp   && gradeResp.ok   && Array.isArray(gradeResp.data))   ? gradeResp.data   : [];
+    const students = (studentResp && studentResp.ok && Array.isArray(studentResp.data)) ? studentResp.data : [];
+    console.log(`[Overview] Loaded ${ALL_BLOCKS.length} blocks, ${grades.length} grades, ${students.length} students`);
+    renderOverviewCards(ALL_BLOCKS, students);
+    renderGradeRows(grades);
+    renderBlockRows(ALL_BLOCKS);
+  } catch (e) {
+    console.error('[Overview] Fetch failed:', e);
+    showDiagPanel('ov-cards', e._diagUrl || SCHOOL_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+// District KPI cards, rolled up from the block rows (student-weighted for %s).
+// Tooltip definitions for KPI cards
+const CARD_TIPS = {
+  'Literacy %':            '<strong>Literacy %</strong><br>Average percentage of literacy sub-competencies scored by students in this scope (Listening Comprehension, Oral Vocab, Letter ID, Word Reading, Sentence Reading, ORF, Reading Comprehension, Letter/Word/Sentence Writing).',
+  'Numeracy %':            '<strong>Numeracy %</strong><br>Average percentage of numeracy sub-competencies scored by students in this scope (Number ID, Place Value, Pattern, Addition, Subtraction, Word Problems, Measurement, Multiplication, Shapes, Data Handling).',
+  'ORF Proficiency':       '<strong>ORF Proficiency</strong><br>% of G2–G3 students meeting the NIPUN ORF threshold. G2: NIPUN ≥ 45 cwpm · Approaching 30–44 · At Risk &lt;30. G3: NIPUN ≥ 60 cwpm · Approaching 45–59 · At Risk &lt;45. G1 excluded (no ORF assessed).',
+  'G2 Avg ORF':            '<strong>Grade 2 Average ORF</strong><br>Average correct words per minute across all Grade 2 students assessed. NIPUN threshold: <strong>≥ 45 cwpm</strong>. Approaching: 30–44 cwpm. At Risk: &lt;30 cwpm.',
+  'G3 Avg ORF':            '<strong>Grade 3 Average ORF</strong><br>Average correct words per minute across all Grade 3 students assessed. NIPUN threshold: <strong>≥ 60 cwpm</strong>. Approaching: 45–59 cwpm. At Risk: &lt;45 cwpm.',
+  'NIPUN Students':        '<strong>FLN Proficiency — NIPUN</strong><br>Student is proficient in <em>both</em> Literacy and Numeracy — i.e. scored ≥75% of competencies in <strong>both</strong> subjects. Literacy % ≥ 75 AND Numeracy % ≥ 75.',
+  'Approaching':           '<strong>FLN Proficiency — Approaching</strong><br>Student is proficient in <em>at least one</em> subject (Literacy or Numeracy) but not both — i.e. 50%–74% in at least one competency area. Needs targeted support to cross the NIPUN threshold.',
+  'At Risk':               '<strong>FLN Proficiency — At Risk</strong><br>Student has at least one subject below the proficiency threshold — scored below 50% on at least one competency. Requires urgent, intensive intervention in that area.',
+  'High Priority Schools': '<strong>Intervention Priority — High</strong><br>Schools where the majority of students are At Risk. These schools require immediate and intensive instructional support.',
+  'Medium Priority Schools':'<strong>Intervention Priority — Medium</strong><br>Schools where students are largely Approaching NIPUN. These schools need close monitoring and targeted practice.',
+  'Low Priority Schools':  '<strong>Intervention Priority — Low</strong><br>Schools where the majority of students have achieved NIPUN status. Continue to maintain quality and identify any remaining gaps.'
+};
+
+// Shared KPI card markup.
+function kpiCard(num, label, sub, cls) {
+  const tip = CARD_TIPS[label];
+  const infoBtn = tip
+    ? `<span class="card-info-btn" tabindex="0" aria-label="About ${label}">ⓘ<span class="card-info-tip">${tip}</span></span>`
+    : '';
+  return `<div class="ov-card ${cls || ''}">
+       <div class="ov-num">${num}</div>
+       <div class="ov-lbl">${label} ${infoBtn}</div>
+       ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
+     </div>`;
+}
+
+function renderOverviewCards(blocks, studentsList) {
+  let schools = 0, covered = 0, students = 0, nipun = 0, atRisk = 0,
+      litW = 0, litN = 0, numW = 0, numN = 0;
+
+  blocks.forEach(b => {
+    schools += b.totalSchools || 0;
+    covered += b.coveredSchools || 0;
+    students += b.totalStudents || 0;
+    nipun += b.nipunStudents || 0;
+    atRisk += b.atRisk || 0;
+    if (b.literacyPct != null) { litW += b.literacyPct * b.totalStudents; litN += b.totalStudents; }
+    if (b.numeracyPct != null) { numW += b.numeracyPct * b.totalStudents; numN += b.totalStudents; }
+  });
+
+  // ORF: computed directly from student records — identical logic to Student tab
+  // so both tabs always show the same number
+  let g2orfSum = 0, g2orfN = 0, g2orfNipun = 0;
+  let g3orfSum = 0, g3orfN = 0, g3orfNipun = 0;
+  (studentsList || []).forEach(s => {
+    if (s.orf != null && typeof s.orf === 'number') {
+      if (Number(s.grade) === 2) {
+        g2orfSum += s.orf; g2orfN++;
+        if (s.orf >= 45) g2orfNipun++;
+      } else if (Number(s.grade) === 3) {
+        g3orfSum += s.orf; g3orfN++;
+        if (s.orf >= 60) g3orfNipun++;
+      }
+    }
+  });
+  const g2AvgOrf     = g2orfN ? g2orfSum / g2orfN : null;
+  const g3AvgOrf     = g3orfN ? g3orfSum / g3orfN : null;
+  const orfProfTotal = g2orfN + g3orfN;
+  const orfProfNipun = g2orfNipun + g3orfNipun;
+  const orfProfPct   = orfProfTotal ? (orfProfNipun / orfProfTotal) * 100 : null;
+
+  const litPct = litN ? litW / litN : null;
+  const numPct = numN ? numW / numN : null;
+  const nipunPct       = students ? (nipun / students) * 100 : 0;
+  const atRiskPct      = students ? (atRisk / students) * 100 : 0;
+
+  // Count Approaching students
+  let approaching = 0;
+  blocks.forEach(b => { approaching += b.approachingStudents || 0; });
+  const approachingPct = students ? (approaching / students) * 100 : 0;
+
+  document.getElementById('ov-cards').innerHTML = [
+    kpiCard(`${fmtIN.format(covered)} <span class="ov-of">/ ${fmtIN.format(schools)}</span>`,
+         'Schools Covered', `${fmtIN.format(schools - covered)} not yet covered`),
+    kpiCard(fmtIN.format(students), 'Students Assessed', ''),
+    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
+    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
+    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
+    kpiCard(
+         orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
+         'ORF Proficiency',
+         (g2AvgOrf != null ? `G2 Avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2 Avg: —') + '<br>' +
+         (g3AvgOrf != null ? `G3 Avg: ${Math.round(g3AvgOrf)} cwpm` : 'G3 Avg: —'),
+         orfProfPct != null && orfProfPct >= 60 ? 'is-good' : orfProfPct != null ? 'is-bad' : '')
+  ].join('');
+}
+
+// School-view cards: scoped covered schools + their student rollup (student-weighted %s).
+function renderSchoolCards(scoped, covered) {
+  let students = 0, nipun = 0, atRisk = 0, approaching = 0,
+      litW = 0, litN = 0, numW = 0, numN = 0;
+  let highPriority = 0, medPriority = 0, lowPriority = 0;
+  covered.forEach(s => {
+    students += s.totalStudents || 0;
+    nipun += s.nipunStudents || 0;
+    atRisk += s.atRisk || 0;
+    approaching += s.approachingStudents || 0;
+    if (s.literacyPct != null) { litW += s.literacyPct * s.totalStudents; litN += s.totalStudents; }
+    if (s.numeracyPct != null) { numW += s.numeracyPct * s.totalStudents; numN += s.totalStudents; }
+    // Priority counts by school status
+    const st = String(s.status || '').toLowerCase();
+    if (st.includes('risk')) highPriority++;
+    else if (st.includes('approaching') || st.includes('almost')) medPriority++;
+    else if (st.includes('nipun')) lowPriority++;
+  });
+  const litPct = litN ? litW / litN : null;
+  const numPct = numN ? numW / numN : null;
+  const nipunPct      = students ? (nipun / students) * 100 : 0;
+  const atRiskPct     = students ? (atRisk / students) * 100 : 0;
+  const approachingPct = students ? (approaching / students) * 100 : 0;
+  const el = document.getElementById('s-cards');
+  if (!el) return;
+  el.innerHTML = [
+    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
+    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
+    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
+    kpiCard(fmtIN.format(highPriority), 'High Priority Schools', `schools needing immediate focus`, 'is-bad'),
+    kpiCard(fmtIN.format(medPriority), 'Medium Priority Schools', `schools needing monitoring`, 'is-approaching'),
+    kpiCard(fmtIN.format(lowPriority), 'Low Priority Schools', `schools on track`, 'is-good')
+  ].join('');
+}
+
+// Student-view cards: from the currently filtered student list.
+function renderStudentCards(filtered) {
+  const students = filtered.length;
+  let nipun = 0, approaching = 0, atRisk = 0;
+  let g2orfSum = 0, g2orfN = 0, g2orfNipun = 0;
+  let g3orfSum = 0, g3orfN = 0, g3orfNipun = 0;
+  filtered.forEach(s => {
+    const st = String(s.status || '').toLowerCase();
+    if (st.includes('nipun') && !st.includes('almost')) nipun++;
+    else if (st.includes('approaching') || st.includes('almost')) approaching++;
+    else if (st.includes('risk')) atRisk++;
+    if (s.orf != null && typeof s.orf === 'number') {
+      if (Number(s.grade) === 2) {
+        g2orfSum += s.orf; g2orfN++;
+        if (s.orf >= 45) g2orfNipun++;
+      } else if (Number(s.grade) === 3) {
+        g3orfSum += s.orf; g3orfN++;
+        if (s.orf >= 60) g3orfNipun++;
+      }
+    }
+  });
+  const nipunPct       = students ? (nipun / students) * 100 : 0;
+  const approachingPct = students ? (approaching / students) * 100 : 0;
+  const atRiskPct      = students ? (atRisk / students) * 100 : 0;
+  const g2AvgOrf       = g2orfN ? g2orfSum / g2orfN : null;
+  const g3AvgOrf       = g3orfN ? g3orfSum / g3orfN : null;
+  const orfProfTotal   = g2orfN + g3orfN;
+  const orfProfNipun   = g2orfNipun + g3orfNipun;
+  const orfProfPct     = orfProfTotal ? (orfProfNipun / orfProfTotal) * 100 : null;
+  const el = document.getElementById('st-cards');
+  if (!el) return;
+  el.innerHTML = [
+    kpiCard(fmtIN.format(students), 'Students Assessed', ''),
+    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
+    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
+    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
+    kpiCard(
+         orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
+         'ORF Proficiency',
+         (g2AvgOrf != null ? `G2 Avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2 Avg: —') + '<br>' +
+         (g3AvgOrf != null ? `G3 Avg: ${Math.round(g3AvgOrf)} cwpm` : 'G3 Avg: —'),
+         orfProfPct != null && orfProfPct >= 60 ? 'is-good' : orfProfPct != null ? 'is-bad' : '')
+  ].join('');
+}
+
+function renderBlockRows(blocks) {
+  const tbody = document.getElementById('ov-blocks-tbody');
+  if (!blocks.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="schools-empty">No blocks found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = blocks.map((b, i) => `
+    <tr class="clickable" data-block="${escapeHtml(b.block || '')}" title="View schools in this block"
+        onclick="viewBlockSchools(this.dataset.block)">
+      <td>${i + 1}</td>
+      <td><span class="school-link">${escapeHtml(b.block || '—')}</span></td>
+      <td class="num">${fmtCount(b.coveredSchools)} / ${fmtCount(b.totalSchools)}</td>
+      <td class="num">${fmtCount(b.totalStudents)}</td>
+      <td class="num col-nipun-count">${fmtCount(b.nipunStudents)}</td>
+      <td class="num" style="color:var(--amber);font-weight:500">${fmtCount(b.approachingStudents)}</td>
+      <td class="num col-at-risk">${fmtCount(b.atRisk)}</td>
+      <td class="num">${fmtPct(b.literacyPct)}</td>
+      <td class="num">${fmtPct(b.numeracyPct)}</td>
+    </tr>
+  `).join('');
+  setupStickyTable('ov-blocks-table', 2);
+  initTableSort('ov-blocks-table');
+}
+
+function toggleOverviewDetails() {
+  const table = document.getElementById('ov-blocks-table');
+  const btn   = document.getElementById('ov-toggle-details');
+  const isHidden = table.classList.toggle('details-hidden');
+  btn.textContent = isHidden ? 'Show subject-level details' : 'Hide subject-level details';
+  btn.classList.toggle('active', !isHidden);
+  setupStickyTable('ov-blocks-table', 2);
+}
+
+// Grade rows removed from UI — this function is a no-op stub kept for API compatibility.
+function renderGradeRows(grades) {
+  // Grade-wise section was removed from the Overview page (v6).
+  // The grades API call is still made to populate the overview KPI cards via renderOverviewCards.
+}
+
+
+// Drill-through: click a grade -> Student view filtered to that grade (master universe).
+function viewGradeStudents(grade) {
+  if (!grade) return;
+  const f = getOverviewFilters();
+  showView(null, 'student');
+  document.getElementById('st-block').value = 'all';
+  document.getElementById('st-school-type').value = f.schoolType || 'all';
+  const box = document.getElementById('st-udise-search');
+  if (box) box.value = '';
+  document.getElementById('st-grade').value = grade;
+  const stQ = document.getElementById('st-quarter');
+  if (stQ.value !== f.quarter) { stQ.value = f.quarter; loadStudentData(); }
+  else { applyStudentFilters(); }
+}
+
+// Drill-through: click a block -> School view filtered to that block.
+function viewBlockSchools(block) {
+  if (!block) return;
+  const f = getOverviewFilters();
+  showView(null, 'school');
+  document.getElementById('s-school-type').value = f.schoolType || 'all';
+  document.getElementById('s-block').value = block;            // option exists (same master block list)
+  const sq = document.getElementById('s-quarter'), sg = document.getElementById('s-grade');
+  let refetch = false;
+  if (sq.value !== f.quarter) { sq.value = f.quarter; refetch = true; }
+  if (sg.value !== f.grade)   { sg.value = f.grade;   refetch = true; }
+  if (refetch) loadSchoolData(); else applyFilters();
+}
+
+// ============================================================
+// Data fetch — JSONP to bypass CORS (works from file:// too)
+// ============================================================
+
+// Classify what went wrong and return a human-readable reason.
+function diagnoseFetchError(httpStatus, bodyText, url) {
+  if (!navigator.onLine) return { reason: 'No internet connection', detail: 'Your device appears to be offline.' };
+  if (httpStatus === 0 || bodyText === '__NETWORK__' || bodyText === '__TIMEOUT__')
+    return { reason: 'Network / CORS block', detail: `The request was blocked or timed out before reaching the server. Most likely cause: the dashboard is opened as a local file (file://) which browsers block from making fetch() calls. The JSONP workaround should handle this — if you still see this error, open the URL directly in a browser tab to verify the script is live.` };
+  if (httpStatus === 302 || (typeof bodyText === 'string' && bodyText.includes('accounts.google.com')))
+    return { reason: 'Redirect to Google login', detail: 'The Apps Script is deployed with "Only myself" access. Redeploy with "Anyone (even anonymous)" access.' };
+  if (httpStatus === 404)
+    return { reason: 'Script not found (404)', detail: 'The Apps Script URL is invalid or the deployment was deleted. Create a new deployment and update the URL in the dashboard.' };
+  if (typeof bodyText === 'string' && bodyText.trim().startsWith('<'))
+    return { reason: 'HTML returned instead of JSON', detail: 'The script returned an HTML error page. Open the URL directly in a browser tab to see the error.' };
+  if (typeof bodyText === 'string' && bodyText.includes('"ok":false'))
+    return { reason: 'API returned ok:false', detail: 'The script ran but signalled a data error. Check the "error" field in the response preview below.' };
+  return { reason: `Unexpected response (HTTP ${httpStatus || '—'})`, detail: 'See raw response below.' };
+}
+
+function showDiagPanel(containerId, url, httpStatus, bodyText, errorMsg) {
+  const container = document.getElementById(containerId);
+  if (!container) { console.error('showDiagPanel: container not found:', containerId); return; }
+  const { reason, detail } = diagnoseFetchError(httpStatus, bodyText, url);
+  const bodyPreview = bodyText && bodyText !== '__NETWORK__' && bodyText !== '__TIMEOUT__'
+    ? bodyText.slice(0, 600) + (bodyText.length > 600 ? '\n… (truncated)' : '')
+    : '(no response body — network-level failure)';
+  const safeUrl = (url || '').replace(/'/g, "\\'");
+  container.innerHTML = `
+    <div class="diag-panel">
+      <h4>⚠ Failed to load data</h4>
+      <div class="diag-row"><span class="diag-label">Reason:</span><span class="diag-val fail">${reason}</span></div>
+      <div class="diag-row"><span class="diag-label">Detail:</span><span class="diag-val">${detail}</span></div>
+      <div class="diag-row"><span class="diag-label">URL called:</span><span class="diag-val" style="font-size:0.72rem">${url || '—'}</span></div>
+      ${httpStatus ? `<div class="diag-row"><span class="diag-label">HTTP status:</span><span class="diag-val">${httpStatus}</span></div>` : ''}
+      ${errorMsg ? `<div class="diag-row"><span class="diag-label">JS error:</span><span class="diag-val fail">${errorMsg}</span></div>` : ''}
+      <div class="diag-body">${bodyPreview.replace(/</g,'&lt;')}</div>
+      <div class="diag-actions">
+        <button class="diag-btn" onclick="location.reload()">↺ Retry</button>
+        <button class="diag-btn sec" onclick="navigator.clipboard&&navigator.clipboard.writeText('${safeUrl}').then(()=>alert('URL copied!'))">Copy URL</button>
+        <a class="diag-btn sec" href="${url || '#'}" target="_blank" rel="noopener">Open URL in tab ↗</a>
+      </div>
+      <ul class="diag-steps">
+        <li>Click <strong>"Open URL in tab"</strong> above — does it return JSON (starting with <code>{"ok":true</code>)?</li>
+        <li>In Apps Script editor → <strong>Deploy → Manage deployments</strong> → verify access is <code>Anyone</code>.</li>
+        <li>If you recently edited the script, create a <strong>New deployment</strong> and paste the new URL at the top of this file.</li>
+        <li>If it returns a login page, change deployment access from "Only myself" → <strong>Anyone (even anonymous)</strong>.</li>
+      </ul>
+    </div>`;
+}
+
+// JSONP loader — works from file://, bypasses CORS entirely.
+// Google Apps Script supports ?callback=fnName out of the box.
+let _jsonpCbCounter = 0;
+function fetchDataJsonp(params = {}) {
+  return new Promise((resolve, reject) => {
+    const base = (params.dataset === 'students') ? STUDENT_DATA_URL : SCHOOL_DATA_URL;
+    const cbName = '__jsonpCb' + (++_jsonpCbCounter);
+    const url = new URL(base);
+    Object.entries(params).forEach(([k, v]) => { if (v && v !== 'all') url.searchParams.set(k, v); });
+    url.searchParams.set('callback', cbName);
+
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      const e = new Error('JSONP timeout (10s)');
+      e._diagUrl = url.toString(); e._diagBody = '__TIMEOUT__';
+      reject(e);
+    }, 10000);
+
+    window[cbName] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      const e = new Error('JSONP script load failed');
+      e._diagUrl = url.toString(); e._diagBody = '__NETWORK__';
+      reject(e);
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    script.src = url.toString();
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchData(params = {}) {
+  const base = (params.dataset === 'students') ? STUDENT_DATA_URL : SCHOOL_DATA_URL;
+  const url = new URL(base);
+  Object.entries(params).forEach(([k, v]) => { if (v && v !== 'all') url.searchParams.set(k, v); });
+  const urlStr = url.toString();
+  try {
+    return await fetchDataJsonp(params);
+  } catch(e) {
+    if (!e._diagUrl) e._diagUrl = urlStr;
+    throw e;
+  }
+}
+
+// ============================================================
+// SCHOOL LEVEL OVERVIEW — data wiring
+// ============================================================
+// Cache full school list once; filter client-side.
+let ALL_SCHOOLS = [];
+
+function getSchoolFilters() {
+  const monthEl = document.getElementById('s-month');
+  return {
+    block:      document.getElementById('s-block').value,
+    schoolType: document.getElementById('s-school-type').value,
+    grade:      document.getElementById('s-grade').value,
+    quarter:    document.getElementById('s-quarter').value,
+    month:      monthEl ? monthEl.value : 'all'
+  };
+}
+
+async function loadSchoolData() {
+  const totalEl = document.getElementById('s-cov-total');
+  totalEl.textContent = '…';
+  try {
+    const f = getSchoolFilters();
+    const resp = await fetchData({ dataset: 'schools', quarter: f.quarter, grade: f.grade, month: f.month });
+    if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
+    ALL_SCHOOLS = Array.isArray(resp.data) ? resp.data : [];
+    console.log(`[School Level] Loaded ${ALL_SCHOOLS.length} schools`);
+    populateBlocks(ALL_SCHOOLS);
+    populateMonthSelect('s-month', 's-quarter', null);
+    applyFilters();
+  } catch (e) {
+    console.error('[School Level] Fetch failed:', e);
+    totalEl.textContent = '⚠';
+    showDiagPanel('s-cards', e._diagUrl || SCHOOL_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+function populateBlocks(schools) {
+  const sel = document.getElementById('s-block');
+  if (sel.options.length > 1) return; // already populated
+  const blocks = [...new Set(schools.map(s => s.block).filter(Boolean))].sort();
+  blocks.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b;
+    opt.textContent = b;
+    sel.appendChild(opt);
+  });
+}
+
+function applyFilters() {
+  const f = getSchoolFilters();
+  // Scope = master schools matching block + school-type (this is the coverage denominator).
+  let scoped = ALL_SCHOOLS;
+  if (f.block      !== 'all') scoped = scoped.filter(s => s.block    === f.block);
+  if (f.schoolType !== 'all') scoped = scoped.filter(s => s.category === f.schoolType);
+  // Grade is applied server-side (re-aggregates counts), so no client-side grade filter here.
+
+  // Covered = visited (≥1 student for the current quarter/grade). Not-covered are hidden from the table.
+  const covered = scoped.filter(s => s.totalStudents > 0);
+
+  // Coverage summary
+  document.getElementById('s-cov-total').textContent      = fmtIN.format(scoped.length);
+  document.getElementById('s-cov-covered').textContent    = fmtIN.format(covered.length);
+
+  // Update scope label
+  const scope = (f.block !== 'all') ? `Basti / ${f.block}` : 'Basti';
+  document.getElementById('s-scope-label').textContent = scope;
+
+  // Render only covered schools (hide not-visited)
+  renderSchoolRows(covered);
+  renderSchoolCards(scoped, covered);
+}
+
+// ----- Table rendering -----
+const LIT_FIELDS = ['listeningComp','oralVocab','pictureComp','letterId','wordReading','sentenceReading','orf','readingComp','letterWriting','wordWriting','sentenceWriting'];
+const NUM_FIELDS = ['numberId','placeValue','pattern','addition','subtraction','wordProblems','measurement','multiplication','shapes','dataHandling'];
+
+// Max possible per competency, by grade (mirrors FIELD_MAX in the Apps Script).
+const FIELD_MAX = {
+  1: { listeningComp:2, oralVocab:3, pictureComp:4, numberId:2, measurement:2 },
+  2: { letterId:20, wordReading:16, sentenceReading:2, wordWriting:4,
+       numberId:12, placeValue:4, pattern:3, addition:4, subtraction:4 },
+  3: { letterId:20, wordReading:16, readingComp:4, sentenceWriting:4,
+       numberId:12, placeValue:3, pattern:4, addition:4, subtraction:4 }
+};
+// Representative max across grades — used at school level when grade = 'all'.
+const FIELD_MAX_ANY = {};
+[1,2,3].forEach(g => Object.entries(FIELD_MAX[g]).forEach(([f,m]) => {
+  FIELD_MAX_ANY[f] = Math.max(FIELD_MAX_ANY[f] || 0, m);
+}));
+
+function maxFor(field, grade) {
+  const g = Number(grade);
+  if ((g === 1 || g === 2 || g === 3) && FIELD_MAX[g] && FIELD_MAX[g][field] != null) {
+    return FIELD_MAX[g][field];
+  }
+  return FIELD_MAX_ANY[field];   // grade unknown / 'all'
+}
+
+// Competency cell as % of max. ORF stays raw cwpm; missing -> '—'.
+function fmtDetailPct(raw, field, grade) {
+  if (field === 'orf') return fmtOrf(raw);
+  if (raw === null || raw === undefined || raw === '') return '—';
+  const max = maxFor(field, grade);
+  if (!max || typeof raw !== 'number') return fmtScore(raw);
+  return (raw / max * 100).toFixed(1) + '%';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtPct(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'number') return v.toFixed(1) + '%';
+  return v;
+}
+
+function fmtScore(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'number') return v.toFixed(1);
+  return v;
+}
+
+// ORF (oral reading fluency) shown as raw cwpm — never % or Yes/No.
+function fmtOrf(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'number') return String(Math.round(v));
+  return v;
+}
+
+function fmtCount(v) {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'number') return fmtIN.format(v);
+  return v;
+}
+
+function renderStatusPill(status) {
+  if (!status) return '<span class="status-pill">—</span>';
+  const s = String(status).toLowerCase();
+  let cls = '';
+  if (s.includes('nipun') && !s.includes('almost')) cls = 's-nipun';
+  else if (s.includes('almost'))                     cls = 's-almost';
+  else if (s.includes('approaching'))                cls = 's-approaching';
+  else if (s.includes('risk'))                       cls = 's-at-risk';
+  else if (s.includes('performer'))                  cls = 's-performer';
+  else if (s.includes('aspirant') || s.includes('striver')) cls = 's-aspirant';
+  return `<span class="status-pill ${cls}">${escapeHtml(status)}</span>`;
+}
+
+// Freeze the first `freezeCount` columns (sticky-left) by measuring header widths.
+// The column-label header row is already sticky-top via CSS; this adds the left offsets.
+function setupStickyTable(tableId, freezeCount) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const headRow = table.querySelector('thead tr.head-row');
+  if (!headRow) return;
+  const ths = headRow.querySelectorAll('th');
+  const lefts = []; let cum = 0;
+  for (let i = 0; i < freezeCount && i < ths.length; i++) {
+    lefts.push(cum);
+    cum += ths[i].getBoundingClientRect().width;
+  }
+  const stick = (cell, left, edge) => {
+    cell.style.position = 'sticky';
+    cell.style.left = left + 'px';
+    cell.classList.add('frozen-col');
+    if (edge) cell.classList.add('freeze-edge');
+  };
+  // Header column-label row
+  lefts.forEach((l, i) => stick(ths[i], l, i === lefts.length - 1));
+  // Group-row blank that sits over the frozen zone (single cell at left 0)
+  const gb = table.querySelector('thead tr.group-row th.gb-freeze');
+  if (gb) stick(gb, 0, true);
+  // Body rows (skip the empty-state single-cell row)
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const tds = tr.children;
+    if (tds.length < freezeCount) return;
+    lefts.forEach((l, i) => stick(tds[i], l, i === lefts.length - 1));
+  });
+}
+
+function renderPriorityBadge(status) {
+  if (!status) return '';
+  const s = String(status).toLowerCase();
+  if (s.includes('nipun') && !s.includes('almost') && !s.includes('almost')) {
+    return '<span class="priority-badge p-low">Low Priority</span>';
+  } else if (s.includes('approaching') || s.includes('almost')) {
+    return '<span class="priority-badge p-med">Medium Priority</span>';
+  } else if (s.includes('risk')) {
+    return '<span class="priority-badge p-high">High Priority</span>';
+  }
+  return '';
+}
+
+function renderSchoolRows(schools) {
+  const tbody = document.getElementById('s-schools-tbody');
+  if (!schools.length) {
+    tbody.innerHTML = '<tr><td colspan="33" class="schools-empty">No visited schools in the current scope.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = schools.map((s, i) => `
+    <tr class="clickable" data-udise="${escapeHtml(String(s.udise || ''))}" title="View students of this school"
+        onclick="viewSchoolStudents('${escapeHtml(String(s.udise || ''))}')">
+      <td>${i + 1}</td>
+      <td>${escapeHtml(s.udise || '—')}</td>
+      <td><span class="school-link">${escapeHtml(s.schoolName || '—')}</span></td>
+      <td>${escapeHtml(s.block || '—')}</td>
+      <td>${renderPriorityBadge(s.status)}</td>
+      <td class="num">${fmtCount(s.totalStudents)}</td>
+      <td class="num col-nipun-count">${fmtCount(s.nipunStudents)}</td>
+      <td class="num" style="color:var(--amber);font-weight:500">${fmtCount(s.approachingStudents)}</td>
+      <td class="num col-at-risk">${fmtCount(s.atRisk)}</td>
+      <td class="num">${fmtPct(s.literacyPct)}</td>
+      <td class="num">${fmtPct(s.numeracyPct)}</td>
+      <td class="num overall-${s.overallColor || ''}">${fmtPct(s.overallPct)}</td>
+      ${LIT_FIELDS.map(f => `<td class="num col-detail lit-detail">${f === 'orf' ? fmtOrf(s.orf) : fmtPct(s[f])}</td>`).join('')}
+      ${NUM_FIELDS.map(f => `<td class="num col-detail num-detail">${fmtPct(s[f])}</td>`).join('')}
+      <td class="col-focus">${escapeHtml(s.focusCompetency || '—').replace(/\n/g, '<br>')}</td>
+    </tr>
+  `).join('');
+  setupStickyTable('s-schools-table', 5);
+  initTableSort('s-schools-table');
+}
+
+function toggleDetails() {
+  const table = document.getElementById('s-schools-table');
+  const btn   = document.getElementById('s-toggle-details');
+  const isHidden = table.classList.toggle('details-hidden');
+  // After toggle: if isHidden is true, details are now hidden
+  btn.textContent = isHidden ? 'Show subject-level details' : 'Hide subject-level details';
+  btn.classList.toggle('active', !isHidden);
+  setupStickyTable('s-schools-table', 5);
+}
+// ============================================================
+// Cache full student list; filter client-side.
+let ALL_STUDENTS = [];
+
+function getStudentFilters() {
+  return {
+    block:      document.getElementById('st-block').value,
+    schoolType: document.getElementById('st-school-type').value,
+    grade:      document.getElementById('st-grade').value,
+    quarter:    document.getElementById('st-quarter').value,
+    month:      document.getElementById('st-month') ? document.getElementById('st-month').value : 'all'
+  };
+}
+
+async function loadStudentData() {
+  const countEl = document.getElementById('st-count-students');
+  if (countEl) { countEl.textContent = '…'; countEl.title = ''; }
+  try {
+    const f = getStudentFilters();
+    const resp = await fetchData({ dataset: 'students', quarter: f.quarter });
+    if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
+    ALL_STUDENTS = Array.isArray(resp.data) ? resp.data : [];
+    console.log(`[Student Level] Loaded ${ALL_STUDENTS.length} students`);
+    populateStudentBlocks(ALL_STUDENTS);
+    populateMonthSelect('st-month', 'st-quarter', getAvailableMonths(ALL_STUDENTS));
+    applyStudentFilters();
+  } catch (e) {
+    console.error('[Student Level] Fetch failed:', e);
+    if (countEl) countEl.textContent = '⚠';
+    showDiagPanel('st-cards', e._diagUrl || STUDENT_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+function populateStudentBlocks(students) {
+  const sel = document.getElementById('st-block');
+  if (sel.options.length > 1) return; // already populated
+  const blocks = [...new Set(students.map(s => s.block).filter(Boolean))].sort();
+  blocks.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b;
+    opt.textContent = b;
+    sel.appendChild(opt);
+  });
+}
+
+function applyStudentFilters() {
+  const f = getStudentFilters();
+  let filtered = ALL_STUDENTS;
+  if (f.block      !== 'all') filtered = filtered.filter(s => s.block    === f.block);
+  if (f.schoolType !== 'all') filtered = filtered.filter(s => s.category === f.schoolType);
+  if (f.grade      !== 'all') filtered = filtered.filter(s => String(s.grade) === String(f.grade));
+  if (f.month      !== 'all') filtered = filtered.filter(s => String(s.assessmentMonth) === String(f.month));
+
+  // UDISE search (substring match on the code)
+  const udiseBox = document.getElementById('st-udise-search');
+  const term = udiseBox ? udiseBox.value.trim() : '';
+  if (term) filtered = filtered.filter(s => String(s.udise || '').includes(term));
+
+  const _cntEl = document.getElementById('st-count-students'); if (_cntEl) _cntEl.textContent = fmtIN.format(filtered.length);
+
+  const scope = (f.block !== 'all') ? `Basti / ${f.block}` : 'Basti';
+  document.getElementById('st-scope-label').textContent = scope;
+
+  renderStudentRows(filtered);
+  renderStudentCards(filtered);
+}
+
+function renderStudentRows(students) {
+  const tbody = document.getElementById('st-students-tbody');
+  if (!students.length) {
+    tbody.innerHTML = '<tr><td colspan="33" class="schools-empty">No students match the current filters.</td></tr>';
+    return;
+  }
+  // Sort: Grade ASC → Overall % ASC (At Risk / low scores first) → Name ASC
+  const sorted = [...students].sort((a, b) => {
+    const ga = Number(a.grade) || 99, gb = Number(b.grade) || 99;
+    if (ga !== gb) return ga - gb;
+    const oa = (a.overallPct != null ? a.overallPct : 999);
+    const ob = (b.overallPct != null ? b.overallPct : 999);
+    if (oa !== ob) return oa - ob;
+    return String(a.studentName || '').localeCompare(String(b.studentName || ''));
+  });
+  tbody.innerHTML = sorted.map((s, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(s.studentName || '—')}</td>
+      <td class="num">${s.grade != null ? escapeHtml(String(s.grade)) : '—'}</td>
+      <td class="col-school-ctx">${escapeHtml(s.udise || '—')}</td>
+      <td class="col-school-ctx">${escapeHtml(s.schoolName || '—')}</td>
+      <td class="col-school-ctx">${escapeHtml(s.block || '—')}</td>
+      <td class="col-status">${renderStatusPill(s.status)}</td>
+      <td class="num">${fmtCount(s.atRiskCount)}</td>
+      <td class="num">${fmtPct(s.literacyPct)}</td>
+      <td class="num">${fmtPct(s.numeracyPct)}</td>
+      <td class="num overall-${s.overallColor || ''}">${fmtPct(s.overallPct)}</td>
+      ${LIT_FIELDS.map(f => `<td class="num col-detail lit-detail">${fmtDetailPct(s[f], f, s.grade)}</td>`).join('')}
+      ${NUM_FIELDS.map(f => `<td class="num col-detail num-detail">${fmtDetailPct(s[f], f, s.grade)}</td>`).join('')}
+      <td class="col-focus">${escapeHtml(s.focusCompetency || '—').replace(/\n/g, '<br>')}</td>
+    </tr>
+  `).join('');
+  const ctxHidden = document.getElementById('st-students-table').classList.contains('school-ctx-hidden');
+  setupStickyTable('st-students-table', ctxHidden ? 3 : 6);
+  initTableSort('st-students-table');
+}
+
+function toggleStudentDetails() {
+  const table = document.getElementById('st-students-table');
+  const btn   = document.getElementById('st-toggle-details');
+  const isHidden = table.classList.toggle('details-hidden');
+  btn.textContent = isHidden ? 'Show Subject-level Details' : 'Hide Subject-level Details';
+  btn.classList.toggle('active', !isHidden);
+  const ctxHidden = table.classList.contains('school-ctx-hidden');
+  setupStickyTable('st-students-table', ctxHidden ? 3 : 6);
+}
+
+function toggleSchoolCtx() {
+  const table = document.getElementById('st-students-table');
+  const btn   = document.getElementById('st-toggle-school-ctx');
+  const nowHidden = table.classList.toggle('school-ctx-hidden');
+  btn.textContent = nowHidden ? 'Show School Details' : 'Hide School Details';
+  btn.classList.toggle('active', !nowHidden);
+  setupStickyTable('st-students-table', nowHidden ? 3 : 6);
+}
+
+// ============================================================
+// Generic table sort engine
+// ============================================================
+// sortState[tableId] = { key, dir }  ('asc' | 'desc')
+const _sortState = {};
+
+// Status sort order for priority columns
+const STATUS_ORDER = { 'NIPUN': 0, 'Approaching': 1, 'At Risk': 2 };
+
+function initTableSort(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const headRow = table.querySelector('thead tr.head-row');
+  if (!headRow) return;
+  headRow.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => sortTable(tableId, th.dataset.key));
+  });
+}
+
+function sortTable(tableId, key) {
+  const state = _sortState[tableId] || { key: null, dir: 'asc' };
+  const dir   = (state.key === key && state.dir === 'asc') ? 'desc' : 'asc';
+  _sortState[tableId] = { key, dir };
+  showClearBtn(tableId);
+
+  // Update header indicators
+  const table = document.getElementById(tableId);
+  table.querySelectorAll('thead th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.key === key) th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+
+  // Sort rows
+  const tbody = table.querySelector('tbody');
+  const rows  = [...tbody.querySelectorAll('tr')];
+  rows.sort((a, b) => {
+    const av = getCellValue(a, table, key);
+    const bv = getCellValue(b, table, key);
+    let cmp;
+    if (av === null && bv === null) cmp = 0;
+    else if (av === null) cmp = 1;   // nulls always last
+    else if (bv === null) cmp = -1;
+    else if (typeof av === 'number' && typeof bv === 'number') cmp = av - bv;
+    else cmp = String(av).localeCompare(String(bv), 'en', { sensitivity: 'base' });
+    return dir === 'asc' ? cmp : -cmp;
+  });
+
+  // Renumber S.No. and re-append
+  rows.forEach((r, i) => {
+    const first = r.querySelector('td');
+    if (first) first.textContent = i + 1;
+    tbody.appendChild(r);
+  });
+}
+
+// Map a data-key to a cell index and extract its value for comparison.
+function getCellValue(row, table, key) {
+  // Build key->colIndex map from head-row data-key attrs (once per call is fine for small tables)
+  const headRow = table.querySelector('thead tr.head-row');
+  const ths = [...headRow.querySelectorAll('th')];
+  const idx  = ths.findIndex(th => th.dataset.key === key);
+  if (idx < 0) return null;
+  const cell = row.querySelectorAll('td')[idx];
+  if (!cell) return null;
+  const raw = cell.textContent.trim().replace(/[,%]/g, '');
+  // Status: sort by priority order
+  if (key === 'status') {
+    const badge = cell.querySelector('.priority-badge');
+    if (badge) {
+      const t = badge.textContent.trim().toLowerCase();
+      if (t.includes('low'))    return STATUS_ORDER['NIPUN'];
+      if (t.includes('medium')) return STATUS_ORDER['Approaching'];
+      if (t.includes('high'))   return STATUS_ORDER['At Risk'];
+    }
+    return 99;
+  }
+  // Numbers
+  const n = parseFloat(raw.replace(/[^0-9.\-]/g, ''));
+  if (!isNaN(n) && raw !== '') return n;
+  // Empty / dash
+  if (raw === '—' || raw === '') return null;
+  return raw;
+}
+
+function clearSort(tableId, btnId) {
+  delete _sortState[tableId];
+  const table = document.getElementById(tableId);
+  if (table) table.querySelectorAll('thead th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+  });
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.remove('visible');
+  // Re-render from source data to restore default order
+  if (tableId === 'ov-blocks-table') renderBlockRows(ALL_BLOCKS);
+  else if (tableId === 's-schools-table') applyFilters();
+  else if (tableId === 'st-students-table') applyStudentFilters();
+}
+
+// Show the clear-sort button when a sort is active
+function showClearBtn(tableId) {
+  const map = {
+    'ov-blocks-table':  'sort-clear-ov',
+    's-schools-table':  'sort-clear-s',
+    'st-students-table':'sort-clear-st'
+  };
+  const btn = document.getElementById(map[tableId]);
+  if (btn) btn.classList.add('visible');
+}
+
+// ============================================================
+// Month filter helpers
+// ============================================================
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Quarter → months it contains (fiscal year: Q1=Apr-Jun, Q2=Jul-Sep, Q3=Oct-Dec, Q4=Jan-Mar)
+const QUARTER_MONTHS = { Q1:[4,5,6], Q2:[7,8,9], Q3:[10,11,12], Q4:[1,2,3] };
+
+function populateMonthSelect(selectId, quarterId, availableMonths) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const qVal = document.getElementById(quarterId) ? document.getElementById(quarterId).value : 'all';
+  const allowed = qVal !== 'all' ? QUARTER_MONTHS[qVal] : null;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="all">All Months</option>';
+  const months = allowed
+    ? allowed.filter(m => !availableMonths || availableMonths.has(m))
+    : (availableMonths ? [...availableMonths].sort((a,b)=>a-b) : []);
+  months.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = MONTH_NAMES[m-1];
+    sel.appendChild(opt);
+  });
+  // Restore selection if still valid
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+}
+
+function getAvailableMonths(students) {
+  const s = new Set();
+  students.forEach(st => { if (st.assessmentMonth) s.add(st.assessmentMonth); });
+  return s;
+}
+
+// ============================================================
+// Multiselect helpers
+// ============================================================
+function toggleMs(wrapperId) {
+  const menu = document.getElementById(wrapperId).querySelector('.ms-menu');
+  const isOpen = menu.classList.toggle('open');
+  if (isOpen) {
+    // Close when clicking outside
+    const close = (e) => {
+      if (!document.getElementById(wrapperId).contains(e.target)) {
+        menu.classList.remove('open');
+        document.removeEventListener('click', close);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  }
+}
+
+function onMsChange(wrapperId) {
+  const wrapper = document.getElementById(wrapperId);
+  const checked = [...wrapper.querySelectorAll('input:checked')].map(c => c.value);
+  const btn = wrapper.querySelector('.ms-btn');
+  if (checked.length === 0) btn.textContent = 'All Grades ▾';
+  else if (checked.length === 1) btn.textContent = `Grade ${checked[0]} ▾`;
+  else btn.textContent = checked.map(v => `G${v}`).join(', ') + ' ▾';
+  // Trigger the appropriate data reload
+  if (wrapperId === 'ov-grade-ms') loadOverviewData();
+}
+
+// ============================================================
+// Download helpers
+// ============================================================
+
+// Generic: extract a visible table to CSV and trigger download.
+function tableToCSV(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return '';
+  const rows = [];
+  // Header rows (skip group-row, use head-row only)
+  const headRow = table.querySelector('thead tr.head-row');
+  if (headRow) {
+    rows.push([...headRow.querySelectorAll('th')]
+      .filter(th => !th.closest('tr') || isVisible(th))
+      .map(th => `"${th.textContent.trim().replace(/"/g, '""')}"`).join(','));
+  }
+  // Body rows
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const cells = [...tr.querySelectorAll('td')].filter(td => isVisible(td));
+    rows.push(cells.map(td => `"${td.textContent.trim().replace(/"/g, '""')}"`).join(','));
+  });
+  return rows.join('\n');
+}
+
+function isVisible(el) {
+  return el.offsetParent !== null && getComputedStyle(el).display !== 'none';
+}
+
+function triggerCSVDownload(csv, filename) {
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
+function downloadStudentCSV() {
+  triggerCSVDownload(tableToCSV('st-students-table'), 'students_basti.csv');
+}
+function downloadSchoolCSV() {
+  triggerCSVDownload(tableToCSV('s-schools-table'), 'schools_basti.csv');
+}
+function downloadBlockCSV() {
+  triggerCSVDownload(tableToCSV('ov-blocks-table'), 'blocks_basti.csv');
+}
+
+// PDF: open a print-ready window with just the active table.
+function printTableAsPDF(tableId, title) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>
+    body{font-family:system-ui,sans-serif;font-size:11px;margin:1.5rem;}
+    h2{font-size:15px;margin:0 0 0.75rem;color:#0f2540;}
+    table{border-collapse:collapse;width:100%;}
+    th,td{padding:4px 7px;border:1px solid #ccc;text-align:left;white-space:nowrap;}
+    thead th{background:#1a3a5c;color:white;font-weight:600;}
+    tr.group-row th{background:#2a5689;color:white;}
+    tr:nth-child(even) td{background:#f7f5f0;}
+    .col-detail{display:none;}
+    @media print{@page{size:landscape;margin:1cm}}
+  </style></head><body>
+  <h2>${title}</h2>
+  ${table.outerHTML}
+  <script>window.onload=()=>{window.print();window.close();}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function downloadStudentPDF() { printTableAsPDF('st-students-table', 'Student Level Overview — NIPUN Basti'); }
+function downloadSchoolPDF()   { printTableAsPDF('s-schools-table',   'School Level Overview — NIPUN Basti'); }
+function downloadBlockPDF()    { printTableAsPDF('ov-blocks-table',   'Block-wise Performance — NIPUN Basti'); }
+
+// ============================================================
+// Init
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  // ---------- District Overview ----------
+  ['ov-school-type', 'ov-quarter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      populateMonthSelect('ov-month', 'ov-quarter', null);
+      loadOverviewData();
+    });
+  });
+  const ovMonth = document.getElementById('ov-month');
+  if (ovMonth) ovMonth.addEventListener('change', loadOverviewData);
+  const ovToggle = document.getElementById('ov-toggle-details');
+  if (ovToggle) ovToggle.addEventListener('click', toggleOverviewDetails);
+
+  // ---------- School Level ----------
+  ['s-block', 's-school-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', applyFilters);
+  });
+  const sGrade = document.getElementById('s-grade');
+  if (sGrade) sGrade.addEventListener('change', loadSchoolData);
+  const sQuarter = document.getElementById('s-quarter');
+  if (sQuarter) sQuarter.addEventListener('change', () => {
+    populateMonthSelect('s-month', 's-quarter', null);
+    loadSchoolData();
+  });
+  const sMonth = document.getElementById('s-month');
+  if (sMonth) sMonth.addEventListener('change', loadSchoolData);
+
+  const sToggle = document.getElementById('s-toggle-details');
+  if (sToggle) sToggle.addEventListener('click', toggleDetails);
+
+  // ---------- Student Level ----------
+  ['st-block', 'st-school-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      const box = document.getElementById('st-udise-search');
+      if (box) box.value = '';
+      applyStudentFilters();
+    });
+  });
+  const stGrade = document.getElementById('st-grade');
+  if (stGrade) stGrade.addEventListener('change', applyStudentFilters);
+
+  const stQuarter = document.getElementById('st-quarter');
+  if (stQuarter) stQuarter.addEventListener('change', () => {
+    populateMonthSelect('st-month', 'st-quarter', getAvailableMonths(ALL_STUDENTS));
+    loadStudentData();
+  });
+  const stMonth = document.getElementById('st-month');
+  if (stMonth) stMonth.addEventListener('change', applyStudentFilters);
+
+  const stToggle = document.getElementById('st-toggle-details');
+  if (stToggle) stToggle.addEventListener('click', toggleStudentDetails);
+
+  const stUdise = document.getElementById('st-udise-search');
+  if (stUdise) stUdise.addEventListener('input', applyStudentFilters);
+
+  // Recompute frozen-column offsets on resize.
+  let _rz;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rz);
+    _rz = setTimeout(() => {
+      
+      setupStickyTable('ov-blocks-table', 2);
+      setupStickyTable('s-schools-table', 5);
+      const stT = document.getElementById('st-students-table');
+      const ctxH = stT && stT.classList.contains('school-ctx-hidden');
+      setupStickyTable('st-students-table', ctxH ? 3 : 6);
+    }, 150);
+  });
+
+  // Initialise sort on all three tables
+  initTableSort('ov-blocks-table');
+  initTableSort('s-schools-table');
+  initTableSort('st-students-table');
+
+  // Initial fetches
+  loadOverviewData();
+  loadSchoolData();
+  loadStudentData();
+});
+</script>
+
+</body>
+</html>
