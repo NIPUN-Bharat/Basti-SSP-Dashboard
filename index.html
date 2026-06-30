@@ -1883,10 +1883,10 @@ function fetchDataJsonp(params = {}) {
     const script = document.createElement('script');
     const timer = setTimeout(() => {
       cleanup();
-      const e = new Error('JSONP timeout (10s)');
+      const e = new Error('JSONP timeout (30s)');
       e._diagUrl = url.toString(); e._diagBody = '__TIMEOUT__';
       reject(e);
-    }, 10000);
+    }, 30000);
 
     window[cbName] = (data) => {
       cleanup();
