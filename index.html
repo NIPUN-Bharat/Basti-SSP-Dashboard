@@ -1113,14 +1113,6 @@
       <div class="meta-row">
         <div class="meta-counts" id="ov-context"></div>
         <div class="filter-group">
-          <div class="month-filter">
-            <span>School type:</span>
-            <select id="ov-school-type">
-              <option value="all" selected>All</option>
-              <option value="RMEAL">RMEAL</option>
-              <option value="Non-RMEAL">Non RMEAL</option>
-            </select>
-          </div>
           <div class="month-filter" style="position:relative;">
             <span>Grade:</span>
             <div class="ms-wrapper" id="ov-grade-ms">
@@ -1271,14 +1263,6 @@
             </select>
           </div>
           <div class="month-filter">
-            <span>School type:</span>
-            <select id="s-school-type">
-              <option value="all" selected>All</option>
-              <option value="RMEAL">RMEAL</option>
-              <option value="Non-RMEAL">Non RMEAL</option>
-            </select>
-          </div>
-          <div class="month-filter">
             <span>Grade:</span>
             <select id="s-grade">
               <option value="all" selected>All Grades</option>
@@ -1391,14 +1375,6 @@
             <select id="st-block">
               <option value="all" selected>All Blocks (District)</option>
               <!-- Block options populated via Apps Script -->
-            </select>
-          </div>
-          <div class="month-filter">
-            <span>School type:</span>
-            <select id="st-school-type">
-              <option value="all" selected>All</option>
-              <option value="RMEAL">RMEAL</option>
-              <option value="Non-RMEAL">Non RMEAL</option>
             </select>
           </div>
           <div class="month-filter">
@@ -1555,7 +1531,6 @@ function viewSchoolStudents(udise) {
   showView(null, 'student');
   // Clear other student filters so the school's students always show.
   document.getElementById('st-block').value = 'all';
-  document.getElementById('st-school-type').value = 'all';
   document.getElementById('st-grade').value = 'all';
   document.getElementById('st-udise-search').value = udise;
   const stQ = document.getElementById('st-quarter');
@@ -1576,7 +1551,6 @@ function getOverviewFilters() {
   const checked = [...document.querySelectorAll('#ov-grade-menu input:checked')].map(c => c.value);
   const monthEl = document.getElementById('ov-month');
   return {
-    schoolType: document.getElementById('ov-school-type').value,
     grade:      checked.length === 0 ? 'all' : (checked.length === 1 ? checked[0] : checked.join(',')),
     quarter:    document.getElementById('ov-quarter').value,
     month:      monthEl ? monthEl.value : 'all'
@@ -1589,8 +1563,8 @@ async function loadOverviewData() {
   try {
     const f = getOverviewFilters();
     const [blockResp, gradeResp, studentResp] = await Promise.all([
-      fetchData({ dataset: 'blocks',   quarter: f.quarter, grade: f.grade, schoolType: f.schoolType, month: f.month }),
-      fetchData({ dataset: 'grades',   quarter: f.quarter, schoolType: f.schoolType, month: f.month }),
+      fetchData({ dataset: 'blocks',   quarter: f.quarter, grade: f.grade, month: f.month }),
+      fetchData({ dataset: 'grades',   quarter: f.quarter, month: f.month }),
       fetchData({ dataset: 'students', quarter: f.quarter, month: f.month })
     ]);
     if (!blockResp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(blockResp) });
@@ -1823,7 +1797,6 @@ function viewGradeStudents(grade) {
   const f = getOverviewFilters();
   showView(null, 'student');
   document.getElementById('st-block').value = 'all';
-  document.getElementById('st-school-type').value = f.schoolType || 'all';
   const box = document.getElementById('st-udise-search');
   if (box) box.value = '';
   document.getElementById('st-grade').value = grade;
@@ -1837,7 +1810,6 @@ function viewBlockSchools(block) {
   if (!block) return;
   const f = getOverviewFilters();
   showView(null, 'school');
-  document.getElementById('s-school-type').value = f.schoolType || 'all';
   document.getElementById('s-block').value = block;            // option exists (same master block list)
   const sq = document.getElementById('s-quarter'), sg = document.getElementById('s-grade');
   let refetch = false;
@@ -1962,7 +1934,6 @@ function getSchoolFilters() {
   const monthEl = document.getElementById('s-month');
   return {
     block:      document.getElementById('s-block').value,
-    schoolType: document.getElementById('s-school-type').value,
     grade:      document.getElementById('s-grade').value,
     quarter:    document.getElementById('s-quarter').value,
     month:      monthEl ? monthEl.value : 'all'
@@ -2005,7 +1976,6 @@ function applyFilters() {
   // Scope = master schools matching block + school-type (this is the coverage denominator).
   let scoped = ALL_SCHOOLS;
   if (f.block      !== 'all') scoped = scoped.filter(s => s.block    === f.block);
-  if (f.schoolType !== 'all') scoped = scoped.filter(s => s.category === f.schoolType);
   // Grade is applied server-side (re-aggregates counts), so no client-side grade filter here.
 
   // Covered = visited (≥1 student for the current quarter/grade). Not-covered are hidden from the table.
@@ -2192,7 +2162,6 @@ let ALL_STUDENTS = [];
 function getStudentFilters() {
   return {
     block:      document.getElementById('st-block').value,
-    schoolType: document.getElementById('st-school-type').value,
     grade:      document.getElementById('st-grade').value,
     quarter:    document.getElementById('st-quarter').value,
     month:      document.getElementById('st-month') ? document.getElementById('st-month').value : 'all'
@@ -2234,7 +2203,6 @@ function applyStudentFilters() {
   const f = getStudentFilters();
   let filtered = ALL_STUDENTS;
   if (f.block      !== 'all') filtered = filtered.filter(s => s.block    === f.block);
-  if (f.schoolType !== 'all') filtered = filtered.filter(s => s.category === f.schoolType);
   if (f.grade      !== 'all') filtered = filtered.filter(s => String(s.grade) === String(f.grade));
   if (f.month      !== 'all') filtered = filtered.filter(s => String(s.assessmentMonth) === String(f.month));
 
@@ -2559,7 +2527,7 @@ function downloadBlockPDF()    { printTableAsPDF('ov-blocks-table',   'Block-wis
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
   // ---------- District Overview ----------
-  ['ov-school-type', 'ov-quarter'].forEach(id => {
+  ['ov-quarter'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', () => {
       populateMonthSelect('ov-month', 'ov-quarter', null);
@@ -2572,7 +2540,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (ovToggle) ovToggle.addEventListener('click', toggleOverviewDetails);
 
   // ---------- School Level ----------
-  ['s-block', 's-school-type'].forEach(id => {
+  ['s-block'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', applyFilters);
   });
@@ -2590,7 +2558,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (sToggle) sToggle.addEventListener('click', toggleDetails);
 
   // ---------- Student Level ----------
-  ['st-block', 'st-school-type'].forEach(id => {
+  ['st-block'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', () => {
       const box = document.getElementById('st-udise-search');
