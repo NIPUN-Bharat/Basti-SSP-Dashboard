@@ -363,6 +363,35 @@
   .band-bar > span { display: block; height: 100%; background: var(--navy); }
   .band-count { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
 
+  /* At-Risk Competency ranking rows */
+  .rk-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .rk-row {
+    display: grid; grid-template-columns: 32px 190px 1fr 130px;
+    align-items: center; gap: 0.85rem;
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 0.6rem 0.85rem;
+  }
+  .rk-rank {
+    font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 600;
+    color: var(--ink-faint); text-align: center;
+  }
+  .rk-row:nth-child(1) .rk-rank, .rk-row:nth-child(2) .rk-rank, .rk-row:nth-child(3) .rk-rank { color: var(--red); }
+  .rk-label { font-size: 0.87rem; color: var(--ink); font-weight: 500; line-height: 1.3; }
+  .rk-label .rk-subject {
+    display: inline-block; font-size: 0.64rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 0.05rem 0.4rem; border-radius: 3px; margin-top: 0.2rem;
+  }
+  .rk-subject.lit { background: var(--lit-light); color: var(--lit); }
+  .rk-subject.num { background: var(--num-light); color: var(--num); }
+  .rk-bar-track { height: 14px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+  .rk-bar-fill { display: block; height: 100%; }
+  .rk-bar-fill.sev-high { background: #c62828; }
+  .rk-bar-fill.sev-mid  { background: #ef6c5a; }
+  .rk-bar-fill.sev-low  { background: #f5a623; }
+  .rk-bar-fill.sev-ok   { background: #2d7a4a; }
+  .rk-meta { text-align: right; font-size: 0.78rem; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .rk-meta .rk-pct { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; color: var(--navy-dark); display: block; }
+
   /* Line chart */
   .line-chart-wrap { width: 100%; overflow-x: auto; }
   .line-chart { display: block; width: 100%; min-width: 500px; height: 220px; }
@@ -1099,6 +1128,8 @@
       <button class="active" onclick="showView(event, 'overview')">Overview</button>
       <button onclick="showView(event, 'school')">School Level Overview</button>
       <button onclick="showView(event, 'student')">Student Level Overview</button>
+      <button onclick="showView(event, 'compare')">Quarter Comparison</button>
+      <button onclick="showView(event, 'risk')">At-Risk Competencies</button>
     </div>
   </div>
 </header>
@@ -1482,6 +1513,109 @@
   </div>
 </div>
 
+<!-- ================== QUARTER COMPARISON ================== -->
+<div class="page" id="page-compare">
+  <div class="container">
+
+    <div class="district-header">
+      <h1 class="display">Quarter Comparison · <span id="cmp-scope-label">Basti (District)</span></h1>
+
+      <div class="meta-row">
+        <div class="filter-group">
+          <div class="month-filter">
+            <span>Scope:</span>
+            <select id="cmp-scope">
+              <option value="district" selected>District</option>
+              <option value="block">Block</option>
+              <option value="school">School</option>
+            </select>
+          </div>
+          <div class="month-filter" id="cmp-block-wrap" style="display:none;">
+            <span>Block:</span>
+            <select id="cmp-block">
+              <option value="all" selected>Select a block…</option>
+            </select>
+          </div>
+          <div class="month-filter" id="cmp-school-wrap" style="display:none;">
+            <span>School:</span>
+            <select id="cmp-school">
+              <option value="all" selected>Select a school…</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Grade:</span>
+            <select id="cmp-grade">
+              <option value="all" selected>All Grades</option>
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cmp-body">
+      <div class="ov-loading">Select a scope to compare Q1 vs Q2…</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================== AT-RISK COMPETENCIES ================== -->
+<div class="page" id="page-risk">
+  <div class="container">
+
+    <div class="district-header">
+      <h1 class="display">At-Risk Competencies · <span id="rk-scope-label">Basti</span></h1>
+      <div class="hi-subtitle" style="font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--ink-faint);">
+        Ranked by the % of assessed students scoring below 50% of the competency's max marks — the weakest areas needing intervention appear first.
+      </div>
+
+      <div class="meta-row">
+        <div class="filter-group">
+          <div class="month-filter">
+            <span>Block:</span>
+            <select id="rk-block">
+              <option value="all" selected>All Blocks (District)</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Grade:</span>
+            <select id="rk-grade">
+              <option value="all" selected>All Grades</option>
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Month:</span>
+            <select id="rk-month">
+              <option value="all" selected>All Months</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Quarter:</span>
+            <select id="rk-quarter">
+              <option value="all">All Quarters</option>
+              <option value="Q1" selected>Q1</option>
+              <option value="Q2">Q2</option>
+              <option value="Q3">Q3</option>
+              <option value="Q4">Q4</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="rk-body">
+      <div class="ov-loading">Loading competency risk ranking…</div>
+    </div>
+
+  </div>
+</div>
+
 <div class="bottom-strip">
   NIPUN Basti · School Support Program Dashboard<br><br>
 </div>
@@ -1491,8 +1625,8 @@
 // CONFIG — Google Apps Script endpoint for Basti
 // ============================================================
 // Both views are served by the new web app: School via dataset=schools, Student via dataset=students.
-const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbzQAkFG3wAGfpD8sA6Pn4_h9W_gkibuiJLLHWy1DfKAHqdEM_m-puAyPtD8yb4J0JUs/exec';
-const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbzQAkFG3wAGfpD8sA6Pn4_h9W_gkibuiJLLHWy1DfKAHqdEM_m-puAyPtD8yb4J0JUs/exec';
+const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbx5eXWC1F5iFOwesSpYJdt_cpTQS0GHTxH4-fGRnTWYDKo02o5HL3QlJHdrTXJgADs7/exec';
+const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbx5eXWC1F5iFOwesSpYJdt_cpTQS0GHTxH4-fGRnTWYDKo02o5HL3QlJHdrTXJgADs7/exec';
 
 // Indian-format number helper.
 const fmtIN = new Intl.NumberFormat('en-IN');
@@ -1522,6 +1656,8 @@ function showView(evt, view) {
   }
   else if (view === 'school') setupStickyTable('s-schools-table', 5);
   else if (view === 'overview') { setupStickyTable('ov-blocks-table', 2); }
+  else if (view === 'compare') { populateCompareDropdowns(); loadCompareData(); }
+  else if (view === 'risk') { if (!RISK_STUDENTS.length) loadRiskData(); else applyRiskFilters(); }
 }
 
 // Drill-through: click a school row -> Student view, filtered to that school's UDISE.
@@ -2278,6 +2414,281 @@ function toggleSchoolCtx() {
 }
 
 // ============================================================
+// QUARTER COMPARISON — data wiring
+// ============================================================
+let CMP_SCHOOL_MASTER = null; // cached master list (all schools, any quarter) for the block/school dropdowns
+
+async function fetchCompareSchoolMaster() {
+  if (CMP_SCHOOL_MASTER) return CMP_SCHOOL_MASTER;
+  const resp = await fetchData({ dataset: 'schools', quarter: 'all', grade: 'all', month: 'all' });
+  CMP_SCHOOL_MASTER = (resp.ok && Array.isArray(resp.data)) ? resp.data : [];
+  return CMP_SCHOOL_MASTER;
+}
+
+async function populateCompareDropdowns() {
+  const blockSel  = document.getElementById('cmp-block');
+  const schoolSel = document.getElementById('cmp-school');
+  if (blockSel.options.length > 1 && schoolSel.options.length > 1) return; // already populated
+
+  const schools = await fetchCompareSchoolMaster();
+
+  const blocks = [...new Set(schools.map(s => s.block).filter(Boolean))].sort();
+  blocks.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b; opt.textContent = b;
+    blockSel.appendChild(opt);
+  });
+
+  const sorted = [...schools].sort((a, b) => String(a.schoolName||'').localeCompare(String(b.schoolName||'')));
+  sorted.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.udise;
+    opt.textContent = `${s.schoolName || 'Unknown'} (${s.udise})`;
+    schoolSel.appendChild(opt);
+  });
+}
+
+function getCompareFilters() {
+  return {
+    scope: document.getElementById('cmp-scope').value,
+    block: document.getElementById('cmp-block').value,
+    school: document.getElementById('cmp-school').value,
+    grade: document.getElementById('cmp-grade').value
+  };
+}
+
+function onCompareScopeChange() {
+  const scope = document.getElementById('cmp-scope').value;
+  document.getElementById('cmp-block-wrap').style.display  = (scope === 'block')  ? 'flex' : 'none';
+  document.getElementById('cmp-school-wrap').style.display = (scope === 'school') ? 'flex' : 'none';
+  loadCompareData();
+}
+
+async function loadCompareData() {
+  const body = document.getElementById('cmp-body');
+  const f = getCompareFilters();
+
+  let id = '';
+  if (f.scope === 'block')  id = f.block;
+  if (f.scope === 'school') id = f.school;
+  if ((f.scope === 'block' && id === 'all') || (f.scope === 'school' && id === 'all')) {
+    body.innerHTML = '<div class="ov-loading">Select a block/school above to compare.</div>';
+    return;
+  }
+
+  body.innerHTML = '<div class="ov-loading">Loading Q1 vs Q2 comparison…</div>';
+  try {
+    const resp = await fetchData({ dataset: 'compare', scope: f.scope, id: id, grade: f.grade });
+    if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
+    document.getElementById('cmp-scope-label').textContent = resp.data.label || 'Basti (District)';
+    renderCompareView(resp.data);
+  } catch (e) {
+    console.error('[Compare] Fetch failed:', e);
+    showDiagPanel('cmp-body', e._diagUrl || SCHOOL_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+// Delta badge: green up / red down / grey flat, relative to Q1 -> Q2.
+function deltaBadge(q1v, q2v, higherIsBetter = true) {
+  if (q1v == null || q2v == null) return '';
+  const diff = q2v - q1v;
+  if (Math.abs(diff) < 0.05) return `<span class="delta flat">flat</span>`;
+  const good = higherIsBetter ? diff > 0 : diff < 0;
+  const arrow = diff > 0 ? '▲' : '▼';
+  const cls = good ? 'up' : 'down';
+  return `<span class="delta ${cls}">${arrow} ${Math.abs(diff).toFixed(1)}${typeof q1v === 'number' && Math.abs(diff) < 1000 ? '' : ''}</span>`;
+}
+
+function cmpCard(label, q1v, q2v, isPct, higherIsBetter) {
+  const fmt = v => v == null ? '—' : (isPct ? v.toFixed(1) + '%' : fmtIN.format(Math.round(v)));
+  return `<div class="ov-card">
+    <div class="ov-lbl" style="margin-bottom:0.5rem;">${label}</div>
+    <div style="display:flex; justify-content:space-between; align-items:baseline;">
+      <div><div class="ov-num" style="font-size:1.15rem;">${fmt(q1v)}</div><div class="ov-sub">Q1</div></div>
+      <div style="font-size:1.3rem; color:var(--ink-faint);">→</div>
+      <div><div class="ov-num" style="font-size:1.15rem;">${fmt(q2v)}</div><div class="ov-sub">Q2</div></div>
+    </div>
+    <div style="margin-top:0.4rem;">${deltaBadge(q1v, q2v, higherIsBetter)}</div>
+  </div>`;
+}
+
+function cmpCompRow(label, q1v, q2v) {
+  const w1 = q1v == null ? 0 : Math.max(0, Math.min(100, q1v));
+  const w2 = q2v == null ? 0 : Math.max(0, Math.min(100, q2v));
+  return `<div class="comp-row">
+    <div class="comp-label">${label}</div>
+    <div class="comp-track"><span class="comp-fill lit" style="width:${w1}%"></span></div>
+    <div class="comp-pct">${fmtPct(q1v)}</div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-label" style="color:var(--ink-faint);font-size:0.75rem;">↳ Q2</div>
+    <div class="comp-track"><span class="comp-fill num" style="width:${w2}%"></span></div>
+    <div class="comp-pct">${fmtPct(q2v)} ${deltaBadge(q1v, q2v, true)}</div>
+  </div>`;
+}
+
+function renderCompareView(data) {
+  const { q1, q2 } = data;
+  const body = document.getElementById('cmp-body');
+
+  if (!q1.totalStudents && !q2.totalStudents) {
+    body.innerHTML = '<div class="schools-empty">No assessment data found for this scope in either quarter.</div>';
+    return;
+  }
+
+  const cardsHtml = [
+    cmpCard('Students Assessed', q1.totalStudents, q2.totalStudents, false, true),
+    cmpCard('NIPUN %', q1.nipunPct, q2.nipunPct, true, true),
+    cmpCard('Approaching %', q1.approachingPct, q2.approachingPct, true, true),
+    cmpCard('At Risk %', q1.atRiskPct, q2.atRiskPct, true, false),
+    cmpCard('Literacy %', q1.literacyPct, q2.literacyPct, true, true),
+    cmpCard('Numeracy %', q1.numeracyPct, q2.numeracyPct, true, true)
+  ].join('');
+
+  const litRows = LIT_FIELDS.filter(f => f !== 'orf')
+    .map(f => cmpCompRow(FIELD_LABEL_MAP[f] || f, q1[f], q2[f])).join('');
+  const numRows = NUM_FIELDS
+    .map(f => cmpCompRow(FIELD_LABEL_MAP[f] || f, q1[f], q2[f])).join('');
+
+  body.innerHTML = `
+    <div class="ov-cards">${cardsHtml}</div>
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h"><span>Literacy Sub-competencies — Q1 vs Q2</span></h3>
+      <div class="comp-bars">${litRows}</div>
+    </div>
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h"><span>Numeracy Sub-competencies — Q1 vs Q2</span></h3>
+      <div class="comp-bars">${numRows}</div>
+    </div>
+  `;
+}
+
+// Human-readable labels for detail fields (mirrors backend FIELD_LABEL).
+const FIELD_LABEL_MAP = {
+  listeningComp:'Listening Comp.', oralVocab:'Oral Vocab', pictureComp:'Picture Comp.',
+  letterId:'Letter Identification', wordReading:'Word Reading', sentenceReading:'Sentence Reading',
+  readingComp:'Reading Comp.', letterWriting:'Letter Writing',
+  wordWriting:'Word Writing', sentenceWriting:'Sentence Writing',
+  numberId:'Number ID', placeValue:'Place Value', pattern:'Pattern', addition:'Addition',
+  subtraction:'Subtraction', wordProblems:'Word Problems', measurement:'Measurement',
+  multiplication:'Multiplication', shapes:'Shapes', dataHandling:'Data Handling'
+};
+
+// ============================================================
+// AT-RISK COMPETENCIES — ranked-list page
+// A competency counts "at risk" for a student if score < 50% of its max
+// (same threshold the backend already uses to pick each student's Focus Competency).
+// ORF uses the dashboard's existing NIPUN/At-Risk cwpm thresholds instead (G2 <30, G3 <45).
+// ============================================================
+let RISK_STUDENTS = [];
+const ORF_AT_RISK_THRESHOLD = { 2: 30, 3: 45 };
+
+function getRiskFilters() {
+  return {
+    block:   document.getElementById('rk-block').value,
+    grade:   document.getElementById('rk-grade').value,
+    quarter: document.getElementById('rk-quarter').value,
+    month:   document.getElementById('rk-month') ? document.getElementById('rk-month').value : 'all'
+  };
+}
+
+async function loadRiskData() {
+  const body = document.getElementById('rk-body');
+  body.innerHTML = '<div class="ov-loading">Loading competency risk ranking…</div>';
+  try {
+    const f = getRiskFilters();
+    const resp = await fetchData({ dataset: 'students', quarter: f.quarter });
+    if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
+    RISK_STUDENTS = Array.isArray(resp.data) ? resp.data : [];
+    populateRiskBlocks(RISK_STUDENTS);
+    populateMonthSelect('rk-month', 'rk-quarter', getAvailableMonths(RISK_STUDENTS));
+    applyRiskFilters();
+  } catch (e) {
+    console.error('[Risk] Fetch failed:', e);
+    showDiagPanel('rk-body', e._diagUrl || STUDENT_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+function populateRiskBlocks(students) {
+  const sel = document.getElementById('rk-block');
+  if (sel.options.length > 1) return; // already populated
+  const blocks = [...new Set(students.map(s => s.block).filter(Boolean))].sort();
+  blocks.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b; opt.textContent = b;
+    sel.appendChild(opt);
+  });
+}
+
+function applyRiskFilters() {
+  const f = getRiskFilters();
+  let filtered = RISK_STUDENTS;
+  if (f.block !== 'all') filtered = filtered.filter(s => s.block === f.block);
+  if (f.grade !== 'all') filtered = filtered.filter(s => String(s.grade) === String(f.grade));
+  if (f.month !== 'all') filtered = filtered.filter(s => String(s.assessmentMonth) === String(f.month));
+
+  document.getElementById('rk-scope-label').textContent = (f.block !== 'all') ? `Basti / ${f.block}` : 'Basti';
+  renderRiskRanking(filtered);
+}
+
+function renderRiskRanking(students) {
+  const body = document.getElementById('rk-body');
+  if (!students.length) {
+    body.innerHTML = '<div class="schools-empty">No students match the current filters.</div>';
+    return;
+  }
+
+  const rows = [];
+  LIT_FIELDS.filter(f => f !== 'orf').concat(NUM_FIELDS).forEach(field => {
+    let atRisk = 0, total = 0;
+    students.forEach(s => {
+      const max = maxFor(field, s.grade);
+      const v = s[field];
+      if (!max || v === null || v === undefined || typeof v !== 'number') return;
+      total++;
+      if ((v / max) < 0.5) atRisk++;
+    });
+    if (total === 0) return;
+    rows.push({
+      field, label: FIELD_LABEL_MAP[field] || field,
+      subject: LIT_FIELDS.includes(field) ? 'lit' : 'num',
+      atRisk, total, pct: (atRisk / total) * 100
+    });
+  });
+
+  // ORF ranked alongside the rest, using the dashboard's existing cwpm thresholds.
+  let orfAtRisk = 0, orfTotal = 0;
+  students.forEach(s => {
+    const t = ORF_AT_RISK_THRESHOLD[Number(s.grade)];
+    if (!t || s.orf === null || s.orf === undefined || typeof s.orf !== 'number') return;
+    orfTotal++;
+    if (s.orf < t) orfAtRisk++;
+  });
+  if (orfTotal > 0) {
+    rows.push({ field: 'orf', label: 'ORF (Oral Reading Fluency)', subject: 'lit', atRisk: orfAtRisk, total: orfTotal, pct: (orfAtRisk / orfTotal) * 100 });
+  }
+
+  rows.sort((a, b) => b.pct - a.pct || b.total - a.total);
+
+  const rowsHtml = rows.map((r, i) => {
+    const sev = r.pct >= 50 ? 'sev-high' : r.pct >= 30 ? 'sev-mid' : r.pct >= 15 ? 'sev-low' : 'sev-ok';
+    return `<div class="rk-row">
+      <div class="rk-rank">${i + 1}</div>
+      <div class="rk-label">${escapeHtml(r.label)}<br><span class="rk-subject ${r.subject}">${r.subject === 'lit' ? 'Literacy' : 'Numeracy'}</span></div>
+      <div class="rk-bar-track"><span class="rk-bar-fill ${sev}" style="width:${r.pct.toFixed(1)}%"></span></div>
+      <div class="rk-meta"><span class="rk-pct">${r.pct.toFixed(1)}%</span>${fmtIN.format(r.atRisk)} / ${fmtIN.format(r.total)} at risk</div>
+    </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h"><span>Competency Risk Ranking <span class="sub-meta">${fmtIN.format(students.length)} students in scope</span></span></h3>
+      <div class="rk-list">${rowsHtml}</div>
+    </div>
+  `;
+}
+
+// ============================================================
 // Generic table sort engine
 // ============================================================
 // sortState[tableId] = { key, dir }  ('asc' | 'desc')
@@ -2601,6 +3012,29 @@ window.addEventListener('DOMContentLoaded', () => {
   initTableSort('ov-blocks-table');
   initTableSort('s-schools-table');
   initTableSort('st-students-table');
+
+  // ---------- Quarter Comparison ----------
+  const cmpScope = document.getElementById('cmp-scope');
+  if (cmpScope) cmpScope.addEventListener('change', onCompareScopeChange);
+  const cmpBlock = document.getElementById('cmp-block');
+  if (cmpBlock) cmpBlock.addEventListener('change', loadCompareData);
+  const cmpSchool = document.getElementById('cmp-school');
+  if (cmpSchool) cmpSchool.addEventListener('change', loadCompareData);
+  const cmpGrade = document.getElementById('cmp-grade');
+  if (cmpGrade) cmpGrade.addEventListener('change', loadCompareData);
+
+  // ---------- At-Risk Competencies ----------
+  ['rk-block', 'rk-grade'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', applyRiskFilters);
+  });
+  const rkQuarter = document.getElementById('rk-quarter');
+  if (rkQuarter) rkQuarter.addEventListener('change', () => {
+    populateMonthSelect('rk-month', 'rk-quarter', null);
+    loadRiskData();
+  });
+  const rkMonth = document.getElementById('rk-month');
+  if (rkMonth) rkMonth.addEventListener('change', applyRiskFilters);
 
   // Initial fetches
   loadOverviewData();
