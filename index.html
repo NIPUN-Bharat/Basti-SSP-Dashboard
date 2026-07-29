@@ -1113,6 +1113,38 @@
     body { background: white; }
     .page { display: block !important; page-break-after: always; }
   }
+
+  /* Program indicator (only shown when viewing RMEAL/Combined, not SSP) */
+  .program-badge {
+    display: none; font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 999px;
+    background: rgba(255,255,255,0.15); color: #fff; margin-left: 0.6rem;
+  }
+  .program-badge.visible { display: inline-block; }
+
+  /* Hidden gear button — sits in the shared footer, available on every page */
+  .secret-gear-wrap { position: relative; display: flex; justify-content: center; margin-top: 0.75rem; }
+  .secret-gear-btn {
+    background: transparent; border: none; cursor: pointer;
+    font-size: 1.3rem; color: var(--ink-faint); opacity: 0.7;
+    padding: 0.3rem 0.5rem; border-radius: 4px; transition: opacity 0.15s, color 0.15s;
+  }
+  .secret-gear-btn:hover { opacity: 1; color: var(--ink); }
+  .secret-gear-menu {
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: white; border: 1px solid var(--rule-strong); border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12); padding: 0.3rem; z-index: 500;
+    min-width: 150px;
+  }
+  .secret-gear-menu.open { display: block; }
+  .secret-gear-menu button {
+    display: block; width: 100%; text-align: left; background: transparent;
+    border: none; padding: 0.45rem 0.6rem; font-family: inherit; font-size: 0.82rem;
+    color: var(--ink); cursor: pointer; border-radius: 4px; font-weight: 500;
+  }
+  .secret-gear-menu button:hover { background: var(--cream); }
+  .secret-gear-menu button.current { color: var(--navy); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1123,6 +1155,7 @@
       <div class="brand-text">
         NIPUN Basti
       </div>
+      <span class="program-badge" id="program-badge"></span>
     </div>
     <div class="view-toggle">
       <button class="active" onclick="showView(event, 'overview')">Overview</button>
@@ -1617,7 +1650,15 @@
 </div>
 
 <div class="bottom-strip">
-  NIPUN Basti · School Support Program Dashboard<br><br>
+  NIPUN Basti · School Support Program Dashboard
+  <div class="secret-gear-wrap">
+    <button class="secret-gear-btn" type="button" onclick="toggleGearMenu(event)" aria-label="settings">⚙</button>
+    <div class="secret-gear-menu" id="gear-menu">
+      <button type="button" onclick="switchProgram('ssp')">SSP</button>
+      <button type="button" onclick="switchProgram('rmeal')">RMEAL</button>
+      <button type="button" onclick="switchProgram('combined')">Combined</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1625,11 +1666,77 @@
 // CONFIG — Google Apps Script endpoint for Basti
 // ============================================================
 // Both views are served by the new web app: School via dataset=schools, Student via dataset=students.
-const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbx5eXWC1F5iFOwesSpYJdt_cpTQS0GHTxH4-fGRnTWYDKo02o5HL3QlJHdrTXJgADs7/exec';
-const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbx5eXWC1F5iFOwesSpYJdt_cpTQS0GHTxH4-fGRnTWYDKo02o5HL3QlJHdrTXJgADs7/exec';
+const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbx2F7cZoCBqxtYc-yIrBUqLRhyJ-z-xXUWgZ1vjIaJb-Qkxxk0rq4JXIVWPtg_cvf8R/exec';
+const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbx2F7cZoCBqxtYc-yIrBUqLRhyJ-z-xXUWgZ1vjIaJb-Qkxxk0rq4JXIVWPtg_cvf8R/exec';
 
 // Indian-format number helper.
 const fmtIN = new Intl.NumberFormat('en-IN');
+
+// ============================================================
+// Program scoping — 'ssp' (default, public) | 'rmeal' | 'combined'
+// Switched only via the hidden gear button on the Overview page.
+// ============================================================
+let CURRENT_PROGRAM = 'ssp';
+
+const PROGRAM_LABELS = { ssp: 'SSP', rmeal: 'RMEAL', combined: 'Combined' };
+
+function toggleGearMenu(evt) {
+  if (evt) evt.stopPropagation();
+  const menu = document.getElementById('gear-menu');
+  const isOpen = menu.classList.toggle('open');
+  menu.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('current', b.textContent.trim() === PROGRAM_LABELS[CURRENT_PROGRAM]);
+  });
+  if (isOpen) {
+    const close = (e) => {
+      if (!menu.contains(e.target)) {
+        menu.classList.remove('open');
+        document.removeEventListener('click', close);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  }
+}
+
+function resetSelectToDefault_(id) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  while (sel.options.length > 1) sel.remove(1);
+}
+
+// Switches the whole dashboard's data source (SSP / RMEAL / Combined) and
+// re-fetches everything. All pages reuse the same markup/JS — only the
+// underlying data changes.
+function switchProgram(program) {
+  CURRENT_PROGRAM = program;
+  document.getElementById('gear-menu').classList.remove('open');
+
+  const badge = document.getElementById('program-badge');
+  if (program === 'ssp') {
+    badge.classList.remove('visible');
+    badge.textContent = '';
+  } else {
+    badge.textContent = PROGRAM_LABELS[program];
+    badge.classList.add('visible');
+  }
+
+  // Clear cached datasets so every page refetches under the new program.
+  ALL_BLOCKS = [];
+  ALL_SCHOOLS = [];
+  ALL_STUDENTS = [];
+  RISK_STUDENTS = [];
+  CMP_SCHOOL_MASTER = null;
+
+  // Reset dropdowns that lazily populate once (block/school lists can differ per program).
+  ['s-block', 'st-block', 'rk-block', 'cmp-block', 'cmp-school'].forEach(resetSelectToDefault_);
+
+  // Re-fetch everything currently visible/cached.
+  loadOverviewData();
+  loadSchoolData();
+  loadStudentData();
+  loadRiskData();
+  loadCompareData();
+}
 
 // ============================================================
 // View switching
@@ -2048,6 +2155,7 @@ function fetchDataJsonp(params = {}) {
 }
 
 async function fetchData(params = {}) {
+  if (!params.program) params.program = CURRENT_PROGRAM;
   const base = (params.dataset === 'students') ? STUDENT_DATA_URL : SCHOOL_DATA_URL;
   const url = new URL(base);
   Object.entries(params).forEach(([k, v]) => { if (v && v !== 'all') url.searchParams.set(k, v); });
