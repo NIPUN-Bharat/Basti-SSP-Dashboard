@@ -799,6 +799,10 @@
   .schools-table thead tr.group-row th.group-blank { background: transparent; }
   .schools-table thead tr.group-row th.group-lit  { background: var(--lit); }
   .schools-table thead tr.group-row th.group-num  { background: var(--num); }
+  .schools-table thead tr.group-row th.group-q1 { background: var(--navy); }
+  .schools-table thead tr.group-row th.group-q2 { background: var(--blue); }
+  .schools-table thead tr.group-row th.group-q3 { background: var(--green); }
+  .schools-table thead tr.group-row th.group-q4 { background: var(--saffron); }
   .schools-table tbody tr:hover td { background: var(--cream); }
   .schools-table tbody tr:last-child td { border-bottom: none; }
   .schools-table .num {
@@ -1162,6 +1166,7 @@
       <button onclick="showView(event, 'school')">School Level Overview</button>
       <button onclick="showView(event, 'student')">Student Level Overview</button>
       <button onclick="showView(event, 'compare')">Quarter Comparison</button>
+      <button onclick="showView(event, 'visits')">Visit Coverage</button>
       <button onclick="showView(event, 'risk')">At-Risk Competencies</button>
     </div>
   </div>
@@ -1595,6 +1600,58 @@
   </div>
 </div>
 
+<!-- ================== VISIT COVERAGE TRACKER ================== -->
+<div class="page" id="page-visits">
+  <div class="container">
+
+    <div class="district-header">
+      <h1 class="display">Visit Coverage · <span id="v-scope-label">Basti</span></h1>
+      <div class="hi-subtitle" style="font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--ink-faint);">
+        Tracks which schools were visited (≥1 student assessed) each quarter, and their intervention priority at each visit.
+      </div>
+
+      <div class="meta-row">
+        <div class="filter-group">
+          <div class="month-filter">
+            <span>Scope:</span>
+            <select id="v-scope">
+              <option value="district" selected>District</option>
+              <option value="block">Block</option>
+              <option value="school">School</option>
+            </select>
+          </div>
+          <div class="month-filter" id="v-block-wrap" style="display:none;">
+            <span>Block:</span>
+            <select id="v-block">
+              <option value="all" selected>Select a block…</option>
+            </select>
+          </div>
+          <div class="month-filter" id="v-school-wrap" style="display:none;">
+            <span>School:</span>
+            <select id="v-school">
+              <option value="all" selected>Select a school…</option>
+            </select>
+          </div>
+          <div class="month-filter">
+            <span>Grade:</span>
+            <select id="v-grade">
+              <option value="all" selected>All Grades</option>
+              <option value="1">Grade 1</option>
+              <option value="2">Grade 2</option>
+              <option value="3">Grade 3</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="v-body">
+      <div class="ov-loading">Loading visit coverage…</div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ================== AT-RISK COMPETENCIES ================== -->
 <div class="page" id="page-risk">
   <div class="container">
@@ -1726,9 +1783,12 @@ function switchProgram(program) {
   ALL_STUDENTS = [];
   RISK_STUDENTS = [];
   CMP_SCHOOL_MASTER = null;
+  VISITS_SCHOOLS_BY_Q = null;
+  VISITS_SCHOOLS_GRADE = null;
+  VISITS_STUDENTS_BY_Q = null;
 
   // Reset dropdowns that lazily populate once (block/school lists can differ per program).
-  ['s-block', 'st-block', 'rk-block', 'cmp-block', 'cmp-school'].forEach(resetSelectToDefault_);
+  ['s-block', 'st-block', 'rk-block', 'cmp-block', 'cmp-school', 'v-block', 'v-school'].forEach(resetSelectToDefault_);
 
   // Re-fetch everything currently visible/cached.
   loadOverviewData();
@@ -1736,6 +1796,7 @@ function switchProgram(program) {
   loadStudentData();
   loadRiskData();
   loadCompareData();
+  loadVisitsData();
 }
 
 // ============================================================
@@ -1764,6 +1825,7 @@ function showView(evt, view) {
   else if (view === 'school') setupStickyTable('s-schools-table', 5);
   else if (view === 'overview') { setupStickyTable('ov-blocks-table', 2); }
   else if (view === 'compare') { populateCompareDropdowns(); loadCompareData(); }
+  else if (view === 'visits') { loadVisitsData(); }
   else if (view === 'risk') { if (!RISK_STUDENTS.length) loadRiskData(); else applyRiskFilters(); }
 }
 
@@ -2797,6 +2859,455 @@ function renderRiskRanking(students) {
 }
 
 // ============================================================
+// VISIT COVERAGE TRACKER — data wiring
+// A school counts as "visited" in a quarter if ≥1 student was assessed
+// there that quarter (dataset=schools already returns 0/blank rows for
+// unvisited schools, so "visited" = totalStudents > 0).
+// ============================================================
+let VISITS_SCHOOLS_BY_Q = null;   // { Q1:[...], Q2:[...], Q3:[...], Q4:[...] } — full master-list rows per quarter
+let VISITS_SCHOOLS_GRADE = null;  // grade filter VISITS_SCHOOLS_BY_Q was fetched with
+let VISITS_STUDENTS_BY_Q = null;  // { Q1:[...], Q2:[...] } — fetched explicitly per quarter.
+                                   // NOTE: quarter:'all' can't be used here — fetchDataJsonp omits
+                                   // any param valued 'all' from the URL (since grade/month default
+                                   // to 'all' server-side when absent), but the backend's own default
+                                   // for a *missing* quarter param is 'Q1', not all-quarters. So an
+                                   // "all quarters" request would silently come back as Q1-only.
+
+const VISIT_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+const VQ_GROUP_CLASS = { Q1: 'group-q1', Q2: 'group-q2', Q3: 'group-q3', Q4: 'group-q4' };
+
+async function ensureVisitsSchoolsByQuarter(grade) {
+  if (VISITS_SCHOOLS_BY_Q && VISITS_SCHOOLS_GRADE === grade) return VISITS_SCHOOLS_BY_Q;
+  const resps = await Promise.all(
+    VISIT_QUARTERS.map(q => fetchData({ dataset: 'schools', quarter: q, grade, month: 'all' }))
+  );
+  const byQ = {};
+  VISIT_QUARTERS.forEach((q, i) => {
+    const r = resps[i];
+    if (!r || !r.ok) throw Object.assign(new Error('API ok=false for ' + q), { _diagBody: JSON.stringify(r) });
+    byQ[q] = Array.isArray(r.data) ? r.data : [];
+  });
+  VISITS_SCHOOLS_BY_Q = byQ;
+  VISITS_SCHOOLS_GRADE = grade;
+  return byQ;
+}
+
+async function ensureVisitsStudentsByQuarter() {
+  if (VISITS_STUDENTS_BY_Q) return VISITS_STUDENTS_BY_Q;
+  const [q1resp, q2resp] = await Promise.all([
+    fetchData({ dataset: 'students', quarter: 'Q1', month: 'all' }),
+    fetchData({ dataset: 'students', quarter: 'Q2', month: 'all' })
+  ]);
+  if (!q1resp.ok) throw Object.assign(new Error('API ok=false for Q1'), { _diagBody: JSON.stringify(q1resp) });
+  if (!q2resp.ok) throw Object.assign(new Error('API ok=false for Q2'), { _diagBody: JSON.stringify(q2resp) });
+  VISITS_STUDENTS_BY_Q = {
+    Q1: Array.isArray(q1resp.data) ? q1resp.data : [],
+    Q2: Array.isArray(q2resp.data) ? q2resp.data : []
+  };
+  return VISITS_STUDENTS_BY_Q;
+}
+
+async function populateVisitsDropdowns() {
+  const blockSel  = document.getElementById('v-block');
+  const schoolSel = document.getElementById('v-school');
+  if (blockSel.options.length > 1 && schoolSel.options.length > 1) return;
+  const schools = await fetchCompareSchoolMaster();
+  if (blockSel.options.length <= 1) {
+    [...new Set(schools.map(s => s.block).filter(Boolean))].sort().forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b; opt.textContent = b;
+      blockSel.appendChild(opt);
+    });
+  }
+  if (schoolSel.options.length <= 1) {
+    [...schools].sort((a, b) => String(a.schoolName || '').localeCompare(String(b.schoolName || ''))).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.udise;
+      opt.textContent = `${s.schoolName || 'Unknown'} (${s.udise})`;
+      schoolSel.appendChild(opt);
+    });
+  }
+}
+
+function getVisitsFilters() {
+  return {
+    scope: document.getElementById('v-scope').value,
+    block: document.getElementById('v-block').value,
+    school: document.getElementById('v-school').value,
+    grade: document.getElementById('v-grade').value
+  };
+}
+
+function onVisitsScopeChange() {
+  const scope = document.getElementById('v-scope').value;
+  document.getElementById('v-block-wrap').style.display  = (scope === 'block')  ? 'flex' : 'none';
+  document.getElementById('v-school-wrap').style.display = (scope === 'school') ? 'flex' : 'none';
+  loadVisitsData();
+}
+
+async function loadVisitsData() {
+  try { await populateVisitsDropdowns(); } catch (_) { /* dropdowns are a nicety; keep going */ }
+  const f = getVisitsFilters();
+  if (f.scope === 'district') return renderVisitsDistrict(f.grade);
+  if (f.scope === 'block')    return renderVisitsBlock(f.block, f.grade);
+  return renderVisitsSchool(f.school, f.grade);
+}
+
+// Drill-through: click a block row on the district table -> Block scope.
+function viewVisitsBlock(block) {
+  if (!block) return;
+  document.getElementById('v-scope').value = 'block';
+  document.getElementById('v-block-wrap').style.display  = 'flex';
+  document.getElementById('v-school-wrap').style.display = 'none';
+  populateVisitsDropdowns().then(() => {
+    document.getElementById('v-block').value = block;
+    loadVisitsData();
+  });
+}
+
+// Drill-through: click a school link -> School scope.
+function viewVisitsSchool(udise) {
+  if (!udise) return;
+  document.getElementById('v-scope').value = 'school';
+  document.getElementById('v-block-wrap').style.display  = 'none';
+  document.getElementById('v-school-wrap').style.display = 'flex';
+  populateVisitsDropdowns().then(() => {
+    document.getElementById('v-school').value = udise;
+    loadVisitsData();
+  });
+}
+
+// Cross-page: open Student Level Overview filtered to this school, all quarters.
+function viewStudentOverviewFor(udise) {
+  if (!udise) return;
+  showView(null, 'student');
+  document.getElementById('st-block').value = 'all';
+  document.getElementById('st-grade').value = 'all';
+  document.getElementById('st-udise-search').value = udise;
+  const stQ = document.getElementById('st-quarter');
+  if (stQ.value !== 'all') { stQ.value = 'all'; loadStudentData(); }
+  else { applyStudentFilters(); }
+}
+
+// Cross-page: open Quarter Comparison scoped to this school.
+function viewCompareForSchool(udise) {
+  if (!udise) return;
+  showView(null, 'compare');
+  populateCompareDropdowns().then(() => {
+    document.getElementById('cmp-scope').value = 'school';
+    document.getElementById('cmp-block-wrap').style.display  = 'none';
+    document.getElementById('cmp-school-wrap').style.display = 'flex';
+    document.getElementById('cmp-school').value = udise;
+    loadCompareData();
+  });
+}
+
+// ----- District scope: block-wise coverage, quarter columns -----
+async function renderVisitsDistrict(grade) {
+  const body = document.getElementById('v-body');
+  body.innerHTML = '<div class="ov-loading">Loading district coverage…</div>';
+  try {
+    const byQ = await ensureVisitsSchoolsByQuarter(grade);
+    const blockSet = new Set();
+    VISIT_QUARTERS.forEach(q => (byQ[q] || []).forEach(s => { if (s.block) blockSet.add(s.block); }));
+    const blocks = [...blockSet].sort();
+
+    const rows = blocks.map(b => {
+      const perQ = {};
+      VISIT_QUARTERS.forEach(q => {
+        const inBlock = (byQ[q] || []).filter(s => s.block === b);
+        const covered = inBlock.filter(s => (s.totalStudents || 0) > 0);
+        let high = 0, med = 0, low = 0;
+        covered.forEach(s => {
+          const st = String(s.status || '').toLowerCase();
+          if (st.includes('risk')) high++;
+          else if (st.includes('approaching') || st.includes('almost')) med++;
+          else if (st.includes('nipun')) low++;
+        });
+        perQ[q] = { total: inBlock.length, covered: covered.length, high, med, low };
+      });
+      return { block: b, perQ };
+    });
+
+    document.getElementById('v-scope-label').textContent = 'Basti';
+    body.innerHTML = buildVisitsDistrictTable(rows);
+    initTableSort('v-district-table');
+    setupStickyTable('v-district-table', 2);
+  } catch (e) {
+    console.error('[Visits/District] Fetch failed:', e);
+    showDiagPanel('v-body', e._diagUrl || SCHOOL_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+function buildVisitsDistrictTable(rows) {
+  if (!rows.length) return '<div class="schools-empty">No blocks found.</div>';
+
+  const groupCells = VISIT_QUARTERS.map(q => `<th colspan="4" class="${VQ_GROUP_CLASS[q]}">${q}</th>`).join('');
+  const colCells = VISIT_QUARTERS.map(q => `
+    <th class="num sortable" data-key="${q}_covered">${q} Covered / Total<span class="sort-icon"></span></th>
+    <th class="num col-detail">High Priority</th>
+    <th class="num col-detail">Medium Priority</th>
+    <th class="num col-detail">Low Priority</th>
+  `).join('');
+
+  const bodyRows = rows.map((r, i) => {
+    const cells = VISIT_QUARTERS.map(q => {
+      const d = r.perQ[q];
+      return `
+        <td class="num" data-sort="${d.covered}">${fmtCount(d.covered)} / ${fmtCount(d.total)}</td>
+        <td class="num col-detail" style="color:var(--red);font-weight:500">${fmtCount(d.high)}</td>
+        <td class="num col-detail" style="color:var(--amber);font-weight:500">${fmtCount(d.med)}</td>
+        <td class="num col-detail" style="color:var(--green);font-weight:500">${fmtCount(d.low)}</td>
+      `;
+    }).join('');
+    return `
+      <tr class="clickable" data-block="${escapeHtml(r.block)}" title="View schools in this block" onclick="viewVisitsBlock(this.dataset.block)">
+        <td>${i + 1}</td>
+        <td><span class="school-link">${escapeHtml(r.block)}</span></td>
+        ${cells}
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h">
+        <span>Block-wise Visit Coverage <button class="sort-clear-btn" id="sort-clear-vd" onclick="clearSort('v-district-table','sort-clear-vd')">✕ Clear sort</button></span>
+        <div class="dl-group">
+          <button id="v-toggle-district-details" class="toggle-btn" type="button" onclick="toggleVisitsDistrictDetails()">Show Priority Breakdown</button>
+        </div>
+      </h3>
+      <div class="schools-table-wrap">
+        <table class="schools-table details-hidden" id="v-district-table">
+          <thead>
+            <tr class="group-row">
+              <th colspan="2" class="group-blank gb-freeze"></th>
+              ${groupCells}
+            </tr>
+            <tr class="head-row" id="v-district-head">
+              <th>S.No.</th>
+              <th class="sortable" data-key="block">Block<span class="sort-icon"></span></th>
+              ${colCells}
+            </tr>
+          </thead>
+          <tbody id="v-district-tbody">${bodyRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function toggleVisitsDistrictDetails() {
+  const table = document.getElementById('v-district-table');
+  const btn   = document.getElementById('v-toggle-district-details');
+  if (!table || !btn) return;
+  const isHidden = table.classList.toggle('details-hidden');
+  btn.textContent = isHidden ? 'Show Priority Breakdown' : 'Hide Priority Breakdown';
+  btn.classList.toggle('active', !isHidden);
+  setupStickyTable('v-district-table', 2);
+}
+
+// ----- Block scope: all schools in the block, quarter columns -----
+async function renderVisitsBlock(block, grade) {
+  const body = document.getElementById('v-body');
+  if (!block || block === 'all') {
+    body.innerHTML = '<div class="ov-loading">Select a block above to see its schools.</div>';
+    return;
+  }
+  body.innerHTML = '<div class="ov-loading">Loading school visit coverage…</div>';
+  try {
+    const byQ = await ensureVisitsSchoolsByQuarter(grade);
+    const byUdise = {};
+    VISIT_QUARTERS.forEach(q => {
+      (byQ[q] || []).filter(s => s.block === block).forEach(s => {
+        const u = String(s.udise).trim();
+        if (!byUdise[u]) byUdise[u] = { udise: u, schoolName: s.schoolName, perQ: {} };
+        byUdise[u].perQ[q] = {
+          assessed: s.totalStudents || 0,
+          nipun: s.nipunStudents || 0,
+          approaching: s.approachingStudents || 0,
+          atRisk: s.atRisk || 0
+        };
+      });
+    });
+    const schools = Object.values(byUdise)
+      .sort((a, b) => String(a.schoolName || '').localeCompare(String(b.schoolName || '')));
+
+    document.getElementById('v-scope-label').textContent = `Basti / ${block}`;
+    body.innerHTML = buildVisitsBlockTable(schools);
+    initTableSort('v-block-table');
+    setupStickyTable('v-block-table', 3);
+    applyVisitsBlockFilter();
+  } catch (e) {
+    console.error('[Visits/Block] Fetch failed:', e);
+    showDiagPanel('v-body', e._diagUrl || SCHOOL_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+function buildVisitsBlockTable(schools) {
+  const groupCells = VISIT_QUARTERS.map(q => `<th colspan="4" class="${VQ_GROUP_CLASS[q]}">${q}</th>`).join('');
+  const colCells = VISIT_QUARTERS.map(q => `
+    <th class="num sortable" data-key="${q}_assessed">${q} Assessed<span class="sort-icon"></span></th>
+    <th class="num col-detail">NIPUN</th>
+    <th class="num col-detail">Approaching</th>
+    <th class="num col-detail">At Risk</th>
+  `).join('');
+
+  const bodyRows = schools.map((s, i) => {
+    const q1Assessed = (s.perQ['Q1'] && s.perQ['Q1'].assessed) || 0;
+    const q2Assessed = (s.perQ['Q2'] && s.perQ['Q2'].assessed) || 0;
+    const cells = VISIT_QUARTERS.map(q => {
+      const d = s.perQ[q] || { assessed: 0, nipun: 0, approaching: 0, atRisk: 0 };
+      return `
+        <td class="num" data-sort="${d.assessed}">${fmtCount(d.assessed)}</td>
+        <td class="num col-detail col-nipun-count">${d.assessed ? fmtCount(d.nipun) : '—'}</td>
+        <td class="num col-detail" style="color:var(--amber);font-weight:500">${d.assessed ? fmtCount(d.approaching) : '—'}</td>
+        <td class="num col-detail col-at-risk">${d.assessed ? fmtCount(d.atRisk) : '—'}</td>
+      `;
+    }).join('');
+    return `
+      <tr data-q1-assessed="${q1Assessed}" data-q2-assessed="${q2Assessed}">
+        <td>${i + 1}</td>
+        <td>${escapeHtml(s.udise)}</td>
+        <td><a href="#" class="school-link" onclick="event.preventDefault(); viewVisitsSchool('${escapeHtml(s.udise)}')">${escapeHtml(s.schoolName || '—')}</a></td>
+        ${cells}
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="kpi-subsection">
+      <h3 class="kpi-sub-h">
+        <span>Schools in Block <button class="sort-clear-btn" id="sort-clear-vb" onclick="clearSort('v-block-table','sort-clear-vb')">✕ Clear sort</button></span>
+        <div class="dl-group">
+          <label style="font-size:0.8rem;color:var(--ink-muted);display:flex;align-items:center;gap:0.4rem;font-weight:500;cursor:pointer;">
+            <input type="checkbox" id="v-both-quarters" checked onchange="applyVisitsBlockFilter()"> Only show schools visited in both Q1 and Q2
+          </label>
+          <button id="v-toggle-block-details" class="toggle-btn" type="button" onclick="toggleVisitsBlockDetails()">Show Status Breakdown</button>
+        </div>
+      </h3>
+      <div class="schools-table-wrap">
+        <table class="schools-table details-hidden" id="v-block-table">
+          <thead>
+            <tr class="group-row">
+              <th colspan="3" class="group-blank gb-freeze"></th>
+              ${groupCells}
+            </tr>
+            <tr class="head-row" id="v-block-head">
+              <th>S.No.</th>
+              <th class="sortable" data-key="udise">UDISE<span class="sort-icon"></span></th>
+              <th class="sortable" data-key="schoolName">School Name<span class="sort-icon"></span></th>
+              ${colCells}
+            </tr>
+          </thead>
+          <tbody id="v-block-tbody">${bodyRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function toggleVisitsBlockDetails() {
+  const table = document.getElementById('v-block-table');
+  const btn   = document.getElementById('v-toggle-block-details');
+  if (!table || !btn) return;
+  const isHidden = table.classList.toggle('details-hidden');
+  btn.textContent = isHidden ? 'Show Status Breakdown' : 'Hide Status Breakdown';
+  btn.classList.toggle('active', !isHidden);
+  setupStickyTable('v-block-table', 3);
+}
+
+function applyVisitsBlockFilter() {
+  const chk = document.getElementById('v-both-quarters');
+  const table = document.getElementById('v-block-table');
+  if (!chk || !table) return;
+  const onlyBoth = chk.checked;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const q1 = Number(tr.dataset.q1Assessed || 0);
+    const q2 = Number(tr.dataset.q2Assessed || 0);
+    const bothVisited = q1 > 0 && q2 > 0;
+    tr.style.display = (onlyBoth && !bothVisited) ? 'none' : '';
+  });
+  setupStickyTable('v-block-table', 3);
+}
+
+// One quarter's student list — sorted alphabetically only, no cross-quarter
+// row matching (student names can be spelled differently between quarters).
+function buildVisitsQuarterStudentTable(quarterLabel, list) {
+  const rows = list.map((s, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(s.studentName || '—')}</td>
+      <td class="num">${s.grade != null ? escapeHtml(String(s.grade)) : '—'}</td>
+      <td>${renderStatusPill(s.status)}</td>
+    </tr>`).join('');
+  return `
+    <div>
+      <h4 style="font-size:0.85rem;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.5rem;">
+        ${quarterLabel} <span class="sub-meta" style="text-transform:none;letter-spacing:0;">${fmtIN.format(list.length)} students</span>
+      </h4>
+      <div class="schools-table-wrap">
+        <table class="schools-table">
+          <thead>
+            <tr class="head-row">
+              <th>S.No.</th>
+              <th>Student Name</th>
+              <th class="num">Grade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="4" class="schools-empty">No students assessed in ${quarterLabel}.</td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ----- School scope: every child assessed at this school, grouped by quarter -----
+async function renderVisitsSchool(udise, grade) {
+  const body = document.getElementById('v-body');
+  if (!udise || udise === 'all') {
+    body.innerHTML = '<div class="ov-loading">Select a school above to see its assessed students.</div>';
+    return;
+  }
+  body.innerHTML = '<div class="ov-loading">Loading student visit history…</div>';
+  try {
+    const [byQ, master] = await Promise.all([ensureVisitsStudentsByQuarter(), fetchCompareSchoolMaster()]);
+    const meta = master.find(s => String(s.udise).trim() === String(udise).trim());
+    const schoolName = (meta && meta.schoolName) || udise;
+
+    document.getElementById('v-scope-label').textContent = `Basti${meta && meta.block ? ' / ' + meta.block : ''} / ${schoolName}`;
+
+    const matchesSchoolAndGrade = s =>
+      String(s.udise).trim() === String(udise).trim() &&
+      (!grade || grade === 'all' || String(s.grade) === String(grade));
+
+    // Q1 and Q2 are listed independently (each alphabetical by name) — not
+    // matched student-to-student, since spelling of the same child's name
+    // can differ across quarters' data entry.
+    const q1List = byQ.Q1.filter(matchesSchoolAndGrade)
+      .sort((a, b) => String(a.studentName || '').localeCompare(String(b.studentName || '')));
+    const q2List = byQ.Q2.filter(matchesSchoolAndGrade)
+      .sort((a, b) => String(a.studentName || '').localeCompare(String(b.studentName || '')));
+
+    body.innerHTML = `
+      <div class="kpi-subsection">
+        <h3 class="kpi-sub-h">
+          <span>
+            <a href="#" class="school-link" onclick="event.preventDefault(); viewStudentOverviewFor('${escapeHtml(udise)}')">${escapeHtml(schoolName)}</a>
+            <span class="sub-meta">${fmtIN.format(q1List.length + q2List.length)} assessments across Q1 + Q2</span>
+          </span>
+          <div class="dl-group">
+            <button class="dl-btn" type="button" onclick="viewCompareForSchool('${escapeHtml(udise)}')"><span class="dl-icon">↗</span> Quarter Comparison</button>
+          </div>
+        </h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:1.25rem;align-items:start;">
+          ${buildVisitsQuarterStudentTable('Q1', q1List)}
+          ${buildVisitsQuarterStudentTable('Q2', q2List)}
+        </div>
+      </div>`;
+  } catch (e) {
+    console.error('[Visits/School] Fetch failed:', e);
+    showDiagPanel('v-body', e._diagUrl || STUDENT_DATA_URL, e._diagStatus, e._diagBody, e.message);
+  }
+}
+
+// ============================================================
 // Generic table sort engine
 // ============================================================
 // sortState[tableId] = { key, dir }  ('asc' | 'desc')
@@ -2860,6 +3371,10 @@ function getCellValue(row, table, key) {
   if (idx < 0) return null;
   const cell = row.querySelectorAll('td')[idx];
   if (!cell) return null;
+  if (cell.dataset && cell.dataset.sort !== undefined && cell.dataset.sort !== '') {
+    const n = parseFloat(cell.dataset.sort);
+    return isNaN(n) ? cell.dataset.sort : n;
+  }
   const raw = cell.textContent.trim().replace(/[,%]/g, '');
   // Status: sort by priority order
   if (key === 'status') {
@@ -2892,6 +3407,8 @@ function clearSort(tableId, btnId) {
   if (tableId === 'ov-blocks-table') renderBlockRows(ALL_BLOCKS);
   else if (tableId === 's-schools-table') applyFilters();
   else if (tableId === 'st-students-table') applyStudentFilters();
+  else if (tableId === 'v-district-table') renderVisitsDistrict(document.getElementById('v-grade').value);
+  else if (tableId === 'v-block-table') renderVisitsBlock(document.getElementById('v-block').value, document.getElementById('v-grade').value);
 }
 
 // Show the clear-sort button when a sort is active
@@ -2899,7 +3416,9 @@ function showClearBtn(tableId) {
   const map = {
     'ov-blocks-table':  'sort-clear-ov',
     's-schools-table':  'sort-clear-s',
-    'st-students-table':'sort-clear-st'
+    'st-students-table':'sort-clear-st',
+    'v-district-table': 'sort-clear-vd',
+    'v-block-table':    'sort-clear-vb'
   };
   const btn = document.getElementById(map[tableId]);
   if (btn) btn.classList.add('visible');
@@ -3113,6 +3632,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const stT = document.getElementById('st-students-table');
       const ctxH = stT && stT.classList.contains('school-ctx-hidden');
       setupStickyTable('st-students-table', ctxH ? 3 : 6);
+      if (document.getElementById('v-district-table')) setupStickyTable('v-district-table', 2);
+      if (document.getElementById('v-block-table')) setupStickyTable('v-block-table', 3);
     }, 150);
   });
 
@@ -3130,6 +3651,16 @@ window.addEventListener('DOMContentLoaded', () => {
   if (cmpSchool) cmpSchool.addEventListener('change', loadCompareData);
   const cmpGrade = document.getElementById('cmp-grade');
   if (cmpGrade) cmpGrade.addEventListener('change', loadCompareData);
+
+  // ---------- Visit Coverage ----------
+  const vScope = document.getElementById('v-scope');
+  if (vScope) vScope.addEventListener('change', onVisitsScopeChange);
+  const vBlock = document.getElementById('v-block');
+  if (vBlock) vBlock.addEventListener('change', loadVisitsData);
+  const vSchool = document.getElementById('v-school');
+  if (vSchool) vSchool.addEventListener('change', loadVisitsData);
+  const vGrade = document.getElementById('v-grade');
+  if (vGrade) vGrade.addEventListener('change', loadVisitsData);
 
   // ---------- At-Risk Competencies ----------
   ['rk-block', 'rk-grade'].forEach(id => {
