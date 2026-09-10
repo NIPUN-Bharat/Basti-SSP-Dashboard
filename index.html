@@ -1495,7 +1495,7 @@
         <table class="schools-table details-hidden school-ctx-hidden" id="st-students-table">
           <thead>
             <tr class="group-row">
-              <th colspan="3" class="group-blank gb-freeze"></th>
+              <th colspan="4" class="group-blank gb-freeze"></th>
               <th colspan="3" class="group-blank col-school-ctx"></th>
               <th colspan="5" class="group-blank"></th>
               <th colspan="11" class="group-lit">Literacy</th>
@@ -1504,6 +1504,7 @@
             </tr>
             <tr class="head-row" id="st-students-head">
               <th>S.No.</th>
+              <th class="sortable" data-key="assessmentDate">Date<span class="sort-icon"></span></th>
               <th class="sortable" data-key="studentName">Student Name<span class="sort-icon"></span></th>
               <th class="num sortable" data-key="grade">Grade<span class="sort-icon"></span></th>
               <th class="col-school-ctx sortable" data-key="udise">UDISE<span class="sort-icon"></span></th>
@@ -1820,7 +1821,7 @@ function showView(evt, view) {
   if (view === 'student') {
     const t = document.getElementById('st-students-table');
     const ctxHidden = t && t.classList.contains('school-ctx-hidden');
-    setupStickyTable('st-students-table', ctxHidden ? 3 : 6);
+    setupStickyTable('st-students-table', ctxHidden ? 4 : 7);
   }
   else if (view === 'school') setupStickyTable('s-schools-table', 5);
   else if (view === 'overview') { setupStickyTable('ov-blocks-table', 2); }
@@ -2364,6 +2365,18 @@ function fmtCount(v) {
   return v;
 }
 
+// Assessment date, formatted "DD - Month - YY" (full month name).
+const ASSESSMENT_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function fmtAssessmentDate(ms) {
+  if (ms === null || ms === undefined || ms === '') return '—';
+  const d = new Date(ms);
+  if (isNaN(d.getTime())) return '—';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mon = ASSESSMENT_MONTH_NAMES[d.getMonth()];
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${dd} - ${mon} - ${yy}`;
+}
+
 function renderStatusPill(status) {
   if (!status) return '<span class="status-pill">—</span>';
   const s = String(status).toLowerCase();
@@ -2544,6 +2557,7 @@ function renderStudentRows(students) {
   tbody.innerHTML = sorted.map((s, i) => `
     <tr>
       <td>${i + 1}</td>
+      <td data-sort="${s.assessmentDateMs != null ? s.assessmentDateMs : ''}">${fmtAssessmentDate(s.assessmentDateMs)}</td>
       <td>${escapeHtml(s.studentName || '—')}</td>
       <td class="num">${s.grade != null ? escapeHtml(String(s.grade)) : '—'}</td>
       <td class="col-school-ctx">${escapeHtml(s.udise || '—')}</td>
@@ -2560,7 +2574,7 @@ function renderStudentRows(students) {
     </tr>
   `).join('');
   const ctxHidden = document.getElementById('st-students-table').classList.contains('school-ctx-hidden');
-  setupStickyTable('st-students-table', ctxHidden ? 3 : 6);
+  setupStickyTable('st-students-table', ctxHidden ? 4 : 7);
   initTableSort('st-students-table');
 }
 
@@ -2571,7 +2585,7 @@ function toggleStudentDetails() {
   btn.textContent = isHidden ? 'Show Subject-level Details' : 'Hide Subject-level Details';
   btn.classList.toggle('active', !isHidden);
   const ctxHidden = table.classList.contains('school-ctx-hidden');
-  setupStickyTable('st-students-table', ctxHidden ? 3 : 6);
+  setupStickyTable('st-students-table', ctxHidden ? 4 : 7);
 }
 
 function toggleSchoolCtx() {
@@ -3233,6 +3247,7 @@ function buildVisitsQuarterStudentTable(quarterLabel, list) {
   const rows = list.map((s, i) => `
     <tr>
       <td>${i + 1}</td>
+      <td>${fmtAssessmentDate(s.assessmentDateMs)}</td>
       <td>${escapeHtml(s.studentName || '—')}</td>
       <td class="num">${s.grade != null ? escapeHtml(String(s.grade)) : '—'}</td>
       <td>${renderStatusPill(s.status)}</td>
@@ -3247,12 +3262,13 @@ function buildVisitsQuarterStudentTable(quarterLabel, list) {
           <thead>
             <tr class="head-row">
               <th>S.No.</th>
+              <th>Date</th>
               <th>Student Name</th>
               <th class="num">Grade</th>
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>${rows || `<tr><td colspan="4" class="schools-empty">No students assessed in ${quarterLabel}.</td></tr>`}</tbody>
+          <tbody>${rows || `<tr><td colspan="5" class="schools-empty">No students assessed in ${quarterLabel}.</td></tr>`}</tbody>
         </table>
       </div>
     </div>`;
@@ -3631,7 +3647,7 @@ window.addEventListener('DOMContentLoaded', () => {
       setupStickyTable('s-schools-table', 5);
       const stT = document.getElementById('st-students-table');
       const ctxH = stT && stT.classList.contains('school-ctx-hidden');
-      setupStickyTable('st-students-table', ctxH ? 3 : 6);
+      setupStickyTable('st-students-table', ctxH ? 4 : 7);
       if (document.getElementById('v-district-table')) setupStickyTable('v-district-table', 2);
       if (document.getElementById('v-block-table')) setupStickyTable('v-block-table', 3);
     }, 150);
