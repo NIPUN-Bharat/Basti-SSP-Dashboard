@@ -1569,6 +1569,30 @@
   .secret-gear-menu button.current { color: var(--brand-700); }
   ::selection { background: var(--brand-100); }
 
+  /* ---------- Assessment cycle tabs (Q2: Cycle 1 / Cycle 2) ---------- */
+  .cycle-filter[hidden], .cycle-note[hidden] { display: none; }
+  .cycle-tabs {
+    display: inline-flex; height: 30px; border: 1px solid var(--line-strong);
+    border-radius: var(--radius-control); overflow: hidden;
+  }
+  .cycle-tabs button {
+    border: 0; background: var(--surface-1); color: var(--ink-700); cursor: pointer;
+    font-size: 13px; font-weight: 500; padding: 0 12px;
+  }
+  .cycle-tabs button + button { border-left: 1px solid var(--line-strong); }
+  .cycle-tabs button:hover { background: var(--surface-2); color: var(--ink-900); }
+  .cycle-tabs button.active { background: var(--brand-700); color: #fff; }
+  .cycle-note {
+    margin-top: 10px; padding: 8px 12px; font-size: 13px; line-height: 1.5; color: var(--ink-700);
+    background: var(--brand-50); border: 1px solid var(--brand-100); border-radius: var(--radius-card);
+  }
+  .cycle-note strong { color: var(--ink-900); }
+  .lad { white-space: nowrap; }
+  .lad-yes { color: var(--good-ink); font-weight: 600; }
+  .lad-yes small { font-weight: 400; color: var(--ink-500); }
+  .lad-no { color: var(--critical-ink); font-weight: 600; }
+  .lad-na { color: var(--ink-400); }
+
   @media print {
     .topbar, .sidebar, .filter-group { display: none !important; }
     .main { padding: 0; }
@@ -1651,8 +1675,16 @@
               <option value="Q4">Q4</option>
             </select>
           </div>
+          <div class="month-filter cycle-filter" data-quarter="ov-quarter" hidden>
+            <span>Cycle</span>
+            <div class="cycle-tabs" role="tablist" aria-label="Assessment cycle">
+              <button type="button" role="tab" data-cycle="1" onclick="setCycle('1')" title="Jul–Aug 2026 · original assessment tool">Cycle 1</button>
+              <button type="button" role="tab" data-cycle="2" onclick="setCycle('2')" title="Sep 2026 · new competency-ladder tool (Grade 2)">Cycle 2</button>
+            </div>
+          </div>
         </div>
       </div>
+      <div class="cycle-note" data-quarter="ov-quarter" hidden></div>
     </div>
 
     <!-- ============== KPI CARDS ============== -->
@@ -1727,6 +1759,10 @@
         <td>Student has <strong>at least one subject below</strong> the proficiency threshold — scored below 50% on at least one competency area (Literacy or Numeracy). Requires urgent, intensive intervention.</td>
       </tr>
       <tr>
+        <td><span class="def-badge b-approach">Q2 Cycle 2</span></td>
+        <td><strong>September 2026 reassessment with the new competency-ladder tool</strong> (Grade 2 only; 15 competencies: 7 Hindi, 8 Maths). A competency counts as <strong>mastered</strong> if the child passed it, if it was skipped because the assessor started the child on a higher rung of the same ladder, or if the child mastered it in the earlier new-tool assessment and was not retested. A competency the child never reached counts as not mastered. Literacy % = Hindi competencies mastered ÷ 7; Numeracy % = Maths competencies mastered ÷ 8. <strong>NIPUN</strong> = Hindi 5 of 7 <strong>and</strong> Maths 6 of 8. Approaching = proficient in one subject; At Risk = proficient in neither. School priority uses the same % NIPUN cut-offs as below. Cycle 1 (Jul–Aug) used the original tool, so the two cycles are shown separately and are not directly comparable.</td>
+      </tr>
+      <tr>
         <td><span class="def-badge b-pri-high">High Priority</span></td>
         <td><strong>School-level intervention priority.</strong> Fewer than 40% of assessed students in the school are NIPUN. Requires immediate and intensive instructional support.</td>
       </tr>
@@ -1799,8 +1835,16 @@
               <option value="Q4">Q4</option>
             </select>
           </div>
+          <div class="month-filter cycle-filter" data-quarter="s-quarter" hidden>
+            <span>Cycle</span>
+            <div class="cycle-tabs" role="tablist" aria-label="Assessment cycle">
+              <button type="button" role="tab" data-cycle="1" onclick="setCycle('1')" title="Jul–Aug 2026 · original assessment tool">Cycle 1</button>
+              <button type="button" role="tab" data-cycle="2" onclick="setCycle('2')" title="Sep 2026 · new competency-ladder tool (Grade 2)">Cycle 2</button>
+            </div>
+          </div>
         </div>
       </div>
+      <div class="cycle-note" data-quarter="s-quarter" hidden></div>
     </div>
 
     <!-- ============== KPI CARDS ============== -->
@@ -1915,8 +1959,16 @@
               <option value="Q4">Q4</option>
             </select>
           </div>
+          <div class="month-filter cycle-filter" data-quarter="st-quarter" hidden>
+            <span>Cycle</span>
+            <div class="cycle-tabs" role="tablist" aria-label="Assessment cycle">
+              <button type="button" role="tab" data-cycle="1" onclick="setCycle('1')" title="Jul–Aug 2026 · original assessment tool">Cycle 1</button>
+              <button type="button" role="tab" data-cycle="2" onclick="setCycle('2')" title="Sep 2026 · new competency-ladder tool (Grade 2)">Cycle 2</button>
+            </div>
+          </div>
         </div>
       </div>
+      <div class="cycle-note" data-quarter="st-quarter" hidden></div>
     </div>
 
     <!-- ============== KPI CARDS ============== -->
@@ -2106,7 +2158,7 @@
     <div class="district-header">
       <nav class="crumbs"><span>Dashboard</span><span class="sep">/</span><span class="cur">At-Risk Competencies</span></nav>
       <h1 class="display">At-Risk Competencies · <span id="rk-scope-label">Basti</span></h1>
-      <div class="hi-subtitle" style="font-family:var(--font-sans);font-size:0.85rem;color:var(--ink-faint);">
+      <div class="hi-subtitle" id="rk-subtitle" style="font-family:var(--font-sans);font-size:0.85rem;color:var(--ink-faint);">
         Ranked by the % of assessed students scoring below 50% of the competency's max marks — the weakest areas needing intervention appear first.
       </div>
 
@@ -2143,8 +2195,16 @@
               <option value="Q4">Q4</option>
             </select>
           </div>
+          <div class="month-filter cycle-filter" data-quarter="rk-quarter" hidden>
+            <span>Cycle</span>
+            <div class="cycle-tabs" role="tablist" aria-label="Assessment cycle">
+              <button type="button" role="tab" data-cycle="1" onclick="setCycle('1')" title="Jul–Aug 2026 · original assessment tool">Cycle 1</button>
+              <button type="button" role="tab" data-cycle="2" onclick="setCycle('2')" title="Sep 2026 · new competency-ladder tool (Grade 2)">Cycle 2</button>
+            </div>
+          </div>
         </div>
       </div>
+      <div class="cycle-note" data-quarter="rk-quarter" hidden></div>
     </div>
 
     <div id="rk-body">
@@ -2251,6 +2311,137 @@ function switchProgram(program) {
 }
 
 // ============================================================
+// Assessment cycles — a school can be assessed more than once a quarter.
+// Q2 has Cycle 1 (Jul–Aug, original tool) and Cycle 2 (Sep, new
+// competency-ladder tool, Grade 2). Cycles are shown separately, never blended.
+// The backend returns Cycle 1 unless a request asks for another cycle.
+// ============================================================
+const QUARTER_CYCLES = { Q2: ['1', '2'] };
+const LADDER_CYCLE = '2';   // cycle assessed with the new ladder tool
+let CURRENT_CYCLE = '1';
+
+function cycleFor(quarter) {
+  const cycles = QUARTER_CYCLES[quarter];
+  return cycles && cycles.includes(CURRENT_CYCLE) ? CURRENT_CYCLE : '1';
+}
+function isLadderView(quarter) { return cycleFor(quarter) === LADDER_CYCLE; }
+
+const CYCLE_NOTE_LADDER = '<strong>Q2 Cycle 2 · September 2026.</strong> Schools reassessed with the new competency-ladder tool (Grade 2 only, 15 competencies: 7 Hindi, 8 Maths). NIPUN = Hindi 5 of 7 and Maths 6 of 8 mastered. Not directly comparable with Cycle 1, which used the original tool.';
+
+// Show the Cycle tabs only for quarters that have more than one cycle.
+function syncCycleUI() {
+  document.querySelectorAll('.cycle-filter').forEach(el => {
+    const q = document.getElementById(el.dataset.quarter).value;
+    el.hidden = !QUARTER_CYCLES[q];
+    el.querySelectorAll('button').forEach(b => {
+      const on = b.dataset.cycle === cycleFor(q);
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  });
+  document.querySelectorAll('.cycle-note').forEach(el => {
+    el.hidden = !isLadderView(document.getElementById(el.dataset.quarter).value);
+    el.innerHTML = CYCLE_NOTE_LADDER;
+  });
+}
+
+// One cycle choice for the whole dashboard (like the program switch).
+function setCycle(cycle) {
+  if (cycle === CURRENT_CYCLE) return;
+  CURRENT_CYCLE = cycle;
+  syncCycleUI();
+  // Each cycle has its own months; go back to All Months.
+  ['ov-month', 's-month', 'st-month', 'rk-month'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 'all';
+  });
+  loadOverviewData();
+  loadSchoolData();
+  loadStudentData();
+  if (RISK_STUDENTS.length || document.getElementById('page-risk').classList.contains('active')) loadRiskData();
+}
+
+// New-tool competencies in ladder order (labels mirror LADDER_META in the Apps Script).
+const LADDER_LABELS = {
+  'UP_H2-PC01': 'Picture Comprehension', 'UP_H2-RD01': 'Letter Identification',
+  'UP_H2-RD02': 'Word Reading', 'UP_H2-RD03': 'Sentence Reading (1–2)',
+  'UP_H2-RD04': 'Sentence Reading (3–4)', 'UP_H2-WR02': 'Word Writing',
+  'UP_H2-RC01': 'Reading Comp. (20–30 words)',
+  'UP_M2-NS01': 'Counting 1–20', 'UP_M2-NS02': 'Counting in Bundles (to 100)',
+  'UP_M2-NS04': 'Place Value (1–99)', 'UP_M2-NS06': 'Counting 1–99',
+  'UP_M2-NS08': 'Number Comparison (to 99)', 'UP_M2-ADD01': 'Addition (to 20)',
+  'UP_M2-SUB01': 'Subtraction (to 20)', 'UP_M2-PT01': 'Shape Patterns'
+};
+const isHindiCode = c => /_H\d/i.test(c);
+
+// Competency codes present in records[key] (an object keyed by code), split by subject.
+function ladderCodes(records, key) {
+  const seen = new Set();
+  records.forEach(r => Object.keys(r[key] || {}).forEach(c => seen.add(c)));
+  const order = Object.keys(LADDER_LABELS);
+  const rank = c => (order.indexOf(c) + 1) || 999;
+  const codes = [...seen].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  if (!codes.length) return null;
+  return { hindi: codes.filter(isHindiCode), maths: codes.filter(c => !isHindiCode(c)) };
+}
+
+// Swap a table's subject-detail columns between the original-tool fields
+// (codes = null) and new-tool ladder competencies. Sortable headers are untouched.
+const _legacyDetailHeads = {};
+function setDetailColumns(tableId, codes) {
+  const table = document.getElementById(tableId);
+  const mode = codes ? codes.hindi.concat(codes.maths).join(',') : 'legacy';
+  if (!table || (table.dataset.detailMode || 'legacy') === mode) return;
+  const head = table.querySelector('thead tr.head-row');
+  const gl = table.querySelector('thead tr.group-row th.group-lit');
+  const gn = table.querySelector('thead tr.group-row th.group-num');
+  if (!_legacyDetailHeads[tableId]) {
+    _legacyDetailHeads[tableId] = {
+      ths: [...head.querySelectorAll('th.col-detail')].map(th => th.cloneNode(true)),
+      lit: gl.colSpan, num: gn.colSpan
+    };
+  }
+  const orig = _legacyDetailHeads[tableId];
+  head.querySelectorAll('th.col-detail').forEach(th => th.remove());
+  const focus = head.querySelector('th.col-focus');
+  if (codes) {
+    const th = (c, cls) => `<th class="num col-detail ${cls}" title="${escapeHtml(c)}">${escapeHtml(LADDER_LABELS[c] || c)}</th>`;
+    focus.insertAdjacentHTML('beforebegin',
+      codes.hindi.map(c => th(c, 'lit-detail')).join('') + codes.maths.map(c => th(c, 'num-detail')).join(''));
+    gl.colSpan = codes.hindi.length || 1; gl.textContent = 'Hindi';
+    gn.colSpan = codes.maths.length || 1; gn.textContent = 'Maths';
+  } else {
+    orig.ths.forEach(th => focus.before(th.cloneNode(true)));
+    gl.colSpan = orig.lit; gl.textContent = 'Literacy';
+    gn.colSpan = orig.num; gn.textContent = 'Numeracy';
+  }
+  table.dataset.detailMode = mode;
+}
+
+// One child's result on one ladder competency.
+function fmtLadderCell(s, code) {
+  const v = s.ladder ? s.ladder[code] : null;
+  if (v === 1) {
+    if ((s.ladderCarried || []).includes(code))
+      return '<span class="lad lad-yes" title="Mastered in the earlier new-tool assessment; not retested">✓ <small>carried</small></span>';
+    if ((s.ladderSkipped || []).includes(code))
+      return '<span class="lad lad-yes" title="Not tested: the assessor started this child on a higher rung of the same ladder">✓ <small>skipped</small></span>';
+    return '<span class="lad lad-yes" title="Mastered">✓</span>';
+  }
+  if (v === 0) return '<span class="lad lad-no" title="Assessed, not mastered">✗</span>';
+  return '<span class="lad lad-na" title="Not reached on the ladder (counts as not mastered)">not reached</span>';
+}
+
+// Ladder view replaces the ORF card (no ORF in the new tool) with average mastery.
+function ladderAvgCard(students) {
+  const lad = (students || []).filter(s => s.tool === 'ladder' && s.scopeSize);
+  const avg = lad.length ? lad.reduce((a, s) => a + (s.masteredCount || 0), 0) / lad.length : null;
+  const size = lad.length ? lad[0].scopeSize : 15;
+  return kpiCard(avg == null ? '\u2014' : `${avg.toFixed(1)} <span class="ov-of">/ ${size}</span>`,
+    'Avg Competencies Mastered', 'per child assessed', '', CARD_TIPS_LADDER);
+}
+
+// ============================================================
 // View switching
 // ============================================================
 function showView(evt, view) {
@@ -2318,10 +2509,11 @@ async function loadOverviewData() {
   cards.innerHTML = '<div class="ov-loading">Loading district summary…</div>';
   try {
     const f = getOverviewFilters();
+    const cycle = cycleFor(f.quarter);
     const [blockResp, gradeResp, studentResp] = await Promise.all([
-      fetchData({ dataset: 'blocks',   quarter: f.quarter, grade: f.grade, month: f.month }),
-      fetchData({ dataset: 'grades',   quarter: f.quarter, month: f.month }),
-      fetchData({ dataset: 'students', quarter: f.quarter, month: f.month })
+      fetchData({ dataset: 'blocks',   quarter: f.quarter, grade: f.grade, month: f.month, cycle }),
+      fetchData({ dataset: 'grades',   quarter: f.quarter, month: f.month, cycle }),
+      fetchData({ dataset: 'students', quarter: f.quarter, month: f.month, cycle })
     ]);
     if (!blockResp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(blockResp) });
     ALL_BLOCKS = Array.isArray(blockResp.data) ? blockResp.data : [];
@@ -2353,9 +2545,17 @@ const CARD_TIPS = {
   'Low Priority Schools':  '<strong>Intervention Priority — Low</strong><br>Schools where the majority of students have achieved NIPUN status. Continue to maintain quality and identify any remaining gaps.'
 };
 
+// Q2 Cycle 2 (new ladder tool) wording for the cards whose rule differs.
+const CARD_TIPS_LADDER = Object.assign({}, CARD_TIPS, {
+  'NIPUN Students':            '<strong>FLN Proficiency — NIPUN (Cycle 2, new tool)</strong><br>Child has mastered <strong>Hindi 5 of 7</strong> and <strong>Maths 6 of 8</strong> competencies. Skipped lower rungs and competencies mastered in the earlier new-tool assessment count as mastered.',
+  'Approaching':               '<strong>FLN Proficiency — Approaching (Cycle 2, new tool)</strong><br>Child is proficient in one subject (Hindi 5 of 7, or Maths 6 of 8) but not both.',
+  'At Risk':                   '<strong>FLN Proficiency — At Risk (Cycle 2, new tool)</strong><br>Child is proficient in neither Hindi (5 of 7) nor Maths (6 of 8).',
+  'Avg Competencies Mastered': '<strong>Average Competencies Mastered</strong><br>Mean number of the 15 Grade 2 ladder competencies each child has mastered (passed, skipped on the way up a ladder, or mastered earlier and not retested).'
+});
+
 // Shared KPI card markup.
-function kpiCard(num, label, sub, cls) {
-  const tip = CARD_TIPS[label];
+function kpiCard(num, label, sub, cls, tips = CARD_TIPS) {
+  const tip = tips[label];
   const infoBtn = tip
     ? `<span class="card-info-btn" tabindex="0" aria-label="About ${label}">ⓘ<span class="card-info-tip">${tip}</span></span>`
     : '';
@@ -2410,15 +2610,17 @@ function renderOverviewCards(blocks, studentsList) {
   let approaching = 0;
   blocks.forEach(b => { approaching += b.approachingStudents || 0; });
   const approachingPct = students ? (approaching / students) * 100 : 0;
+  const ladder = isLadderView(getOverviewFilters().quarter);
+  const tips = ladder ? CARD_TIPS_LADDER : CARD_TIPS;
 
   document.getElementById('ov-cards').innerHTML = [
     kpiCard(`${fmtIN.format(covered)} <span class="ov-of">/ ${fmtIN.format(schools)}</span>`,
          'Schools Covered', `${fmtIN.format(schools - covered)} not yet covered`),
     kpiCard(fmtIN.format(students), 'Students Assessed', ''),
-    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
-    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
-    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
-    kpiCard(
+    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good', tips),
+    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching', tips),
+    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad', tips),
+    ladder ? ladderAvgCard(studentsList) : kpiCard(
          orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
          'ORF Proficiency',
          (g2AvgOrf != null ? `G2 Avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2 Avg: —') + '<br>' +
@@ -2452,10 +2654,11 @@ function renderSchoolCards(scoped, covered) {
   const approachingPct = students ? (approaching / students) * 100 : 0;
   const el = document.getElementById('s-cards');
   if (!el) return;
+  const tips = isLadderView(getSchoolFilters().quarter) ? CARD_TIPS_LADDER : CARD_TIPS;
   el.innerHTML = [
-    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
-    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
-    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
+    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good', tips),
+    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching', tips),
+    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad', tips),
     kpiCard(fmtIN.format(highPriority), 'High Priority Schools', `schools needing immediate focus`, 'is-bad'),
     kpiCard(fmtIN.format(medPriority), 'Medium Priority Schools', `schools needing monitoring`, 'is-approaching'),
     kpiCard(fmtIN.format(lowPriority), 'Low Priority Schools', `schools on track`, 'is-good')
@@ -2493,12 +2696,14 @@ function renderStudentCards(filtered) {
   const orfProfPct     = orfProfTotal ? (orfProfNipun / orfProfTotal) * 100 : null;
   const el = document.getElementById('st-cards');
   if (!el) return;
+  const ladder = isLadderView(getStudentFilters().quarter);
+  const tips = ladder ? CARD_TIPS_LADDER : CARD_TIPS;
   el.innerHTML = [
     kpiCard(fmtIN.format(students), 'Students Assessed', ''),
-    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good'),
-    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching'),
-    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad'),
-    kpiCard(
+    kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good', tips),
+    kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching', tips),
+    kpiCard(`${atRiskPct.toFixed(1)}%`, 'At Risk', `${fmtIN.format(atRisk)} students`, 'is-bad', tips),
+    ladder ? ladderAvgCard(filtered) : kpiCard(
          orfProfPct == null ? '\u2014' : `${orfProfPct.toFixed(1)}%`,
          'ORF Proficiency',
          (g2AvgOrf != null ? `G2 Avg: ${Math.round(g2AvgOrf)} cwpm` : 'G2 Avg: —') + '<br>' +
@@ -2702,7 +2907,7 @@ async function loadSchoolData() {
   totalEl.textContent = '…';
   try {
     const f = getSchoolFilters();
-    const resp = await fetchData({ dataset: 'schools', quarter: f.quarter, grade: f.grade, month: f.month });
+    const resp = await fetchData({ dataset: 'schools', quarter: f.quarter, grade: f.grade, month: f.month, cycle: cycleFor(f.quarter) });
     if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
     ALL_SCHOOLS = Array.isArray(resp.data) ? resp.data : [];
     console.log(`[School Level] Loaded ${ALL_SCHOOLS.length} schools`);
@@ -2887,6 +3092,8 @@ function renderPriorityBadge(status) {
 
 function renderSchoolRows(schools) {
   const tbody = document.getElementById('s-schools-tbody');
+  const codes = isLadderView(getSchoolFilters().quarter) ? ladderCodes(schools, 'ladderMastery') : null;
+  setDetailColumns('s-schools-table', codes);
   if (!schools.length) {
     tbody.innerHTML = '<tr><td colspan="33" class="schools-empty">No visited schools in the current scope.</td></tr>';
     return;
@@ -2906,8 +3113,11 @@ function renderSchoolRows(schools) {
       <td class="num">${fmtPct(s.literacyPct)}</td>
       <td class="num">${fmtPct(s.numeracyPct)}</td>
       <td class="num overall-${s.overallColor || ''}">${fmtPct(s.overallPct)}</td>
-      ${LIT_FIELDS.map(f => `<td class="num col-detail lit-detail">${f === 'orf' ? fmtOrf(s.orf) : fmtPct(s[f])}</td>`).join('')}
-      ${NUM_FIELDS.map(f => `<td class="num col-detail num-detail">${fmtPct(s[f])}</td>`).join('')}
+      ${codes
+        ? codes.hindi.map(c => `<td class="num col-detail lit-detail">${fmtPct(s.ladderMastery ? s.ladderMastery[c] : null)}</td>`).join('') +
+          codes.maths.map(c => `<td class="num col-detail num-detail">${fmtPct(s.ladderMastery ? s.ladderMastery[c] : null)}</td>`).join('')
+        : LIT_FIELDS.map(f => `<td class="num col-detail lit-detail">${f === 'orf' ? fmtOrf(s.orf) : fmtPct(s[f])}</td>`).join('') +
+          NUM_FIELDS.map(f => `<td class="num col-detail num-detail">${fmtPct(s[f])}</td>`).join('')}
       <td class="col-focus">${escapeHtml(s.focusCompetency || '—').replace(/\n/g, '<br>')}</td>
     </tr>
   `).join('');
@@ -2942,7 +3152,7 @@ async function loadStudentData() {
   if (countEl) { countEl.textContent = '…'; countEl.title = ''; }
   try {
     const f = getStudentFilters();
-    const resp = await fetchData({ dataset: 'students', quarter: f.quarter });
+    const resp = await fetchData({ dataset: 'students', quarter: f.quarter, cycle: cycleFor(f.quarter) });
     if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
     ALL_STUDENTS = Array.isArray(resp.data) ? resp.data : [];
     console.log(`[Student Level] Loaded ${ALL_STUDENTS.length} students`);
@@ -2991,6 +3201,8 @@ function applyStudentFilters() {
 
 function renderStudentRows(students) {
   const tbody = document.getElementById('st-students-tbody');
+  const codes = isLadderView(getStudentFilters().quarter) ? ladderCodes(ALL_STUDENTS, 'ladder') : null;
+  setDetailColumns('st-students-table', codes);
   if (!students.length) {
     tbody.innerHTML = '<tr><td colspan="33" class="schools-empty">No students match the current filters.</td></tr>';
     return;
@@ -3018,8 +3230,11 @@ function renderStudentRows(students) {
       <td class="num">${fmtPct(s.literacyPct)}</td>
       <td class="num">${fmtPct(s.numeracyPct)}</td>
       <td class="num overall-${s.overallColor || ''}">${fmtPct(s.overallPct)}</td>
-      ${LIT_FIELDS.map(f => `<td class="num col-detail lit-detail">${fmtDetailPct(s[f], f, s.grade)}</td>`).join('')}
-      ${NUM_FIELDS.map(f => `<td class="num col-detail num-detail">${fmtDetailPct(s[f], f, s.grade)}</td>`).join('')}
+      ${codes
+        ? codes.hindi.map(c => `<td class="num col-detail lit-detail">${fmtLadderCell(s, c)}</td>`).join('') +
+          codes.maths.map(c => `<td class="num col-detail num-detail">${fmtLadderCell(s, c)}</td>`).join('')
+        : LIT_FIELDS.map(f => `<td class="num col-detail lit-detail">${fmtDetailPct(s[f], f, s.grade)}</td>`).join('') +
+          NUM_FIELDS.map(f => `<td class="num col-detail num-detail">${fmtDetailPct(s[f], f, s.grade)}</td>`).join('')}
       <td class="col-focus">${escapeHtml(s.focusCompetency || '—').replace(/\n/g, '<br>')}</td>
     </tr>
   `).join('');
@@ -3231,7 +3446,7 @@ async function loadRiskData() {
   body.innerHTML = '<div class="ov-loading">Loading competency risk ranking…</div>';
   try {
     const f = getRiskFilters();
-    const resp = await fetchData({ dataset: 'students', quarter: f.quarter });
+    const resp = await fetchData({ dataset: 'students', quarter: f.quarter, cycle: cycleFor(f.quarter) });
     if (!resp.ok) throw Object.assign(new Error('API ok=false'), { _diagBody: JSON.stringify(resp) });
     RISK_STUDENTS = Array.isArray(resp.data) ? resp.data : [];
     populateRiskBlocks(RISK_STUDENTS);
@@ -3267,12 +3482,27 @@ function applyRiskFilters() {
 
 function renderRiskRanking(students) {
   const body = document.getElementById('rk-body');
+  const ladder = isLadderView(getRiskFilters().quarter);
+  document.getElementById('rk-subtitle').textContent = ladder
+    ? 'Ranked by the % of assessed children who have not mastered each competency (a competency the child never reached counts as not mastered) — the weakest areas needing intervention appear first.'
+    : "Ranked by the % of assessed students scoring below 50% of the competency's max marks — the weakest areas needing intervention appear first.";
   if (!students.length) {
     body.innerHTML = '<div class="schools-empty">No students match the current filters.</div>';
     return;
   }
 
   const rows = [];
+  if (ladder) {
+    // New tool: % of all children in scope who have not mastered the competency.
+    const codes = ladderCodes(students, 'ladder');
+    (codes ? codes.hindi.concat(codes.maths) : []).forEach(c => {
+      const inScope = students.filter(s => s.ladder && c in s.ladder);
+      if (!inScope.length) return;
+      const notMastered = inScope.filter(s => s.ladder[c] !== 1).length;
+      rows.push({ field: c, label: LADDER_LABELS[c] || c, subject: isHindiCode(c) ? 'lit' : 'num',
+                  atRisk: notMastered, total: inScope.length, pct: (notMastered / inScope.length) * 100 });
+    });
+  } else
   LIT_FIELDS.filter(f => f !== 'orf').concat(NUM_FIELDS).forEach(field => {
     let atRisk = 0, total = 0;
     students.forEach(s => {
@@ -3292,7 +3522,7 @@ function renderRiskRanking(students) {
 
   // ORF ranked alongside the rest, using the dashboard's existing cwpm thresholds.
   let orfAtRisk = 0, orfTotal = 0;
-  students.forEach(s => {
+  if (!ladder) students.forEach(s => {
     const t = ORF_AT_RISK_THRESHOLD[Number(s.grade)];
     if (!t || s.orf === null || s.orf === undefined || typeof s.orf !== 'number') return;
     orfTotal++;
@@ -3308,9 +3538,9 @@ function renderRiskRanking(students) {
     const sev = r.pct >= 50 ? 'sev-high' : r.pct >= 30 ? 'sev-mid' : r.pct >= 15 ? 'sev-low' : 'sev-ok';
     return `<div class="rk-row">
       <div class="rk-rank">${i + 1}</div>
-      <div class="rk-label">${escapeHtml(r.label)}<br><span class="rk-subject ${r.subject}">${r.subject === 'lit' ? 'Literacy' : 'Numeracy'}</span></div>
+      <div class="rk-label">${escapeHtml(r.label)}<br><span class="rk-subject ${r.subject}">${ladder ? (r.subject === 'lit' ? 'Hindi' : 'Maths') : (r.subject === 'lit' ? 'Literacy' : 'Numeracy')}</span></div>
       <div class="rk-bar-track"><span class="rk-bar-fill ${sev}" style="width:${r.pct.toFixed(1)}%"></span></div>
-      <div class="rk-meta"><span class="rk-pct">${r.pct.toFixed(1)}%</span>${fmtIN.format(r.atRisk)} / ${fmtIN.format(r.total)} at risk</div>
+      <div class="rk-meta"><span class="rk-pct">${r.pct.toFixed(1)}%</span>${fmtIN.format(r.atRisk)} / ${fmtIN.format(r.total)} ${ladder ? 'not mastered' : 'at risk'}</div>
     </div>`;
   }).join('');
 
@@ -4034,6 +4264,7 @@ window.addEventListener('DOMContentLoaded', () => {
   ['ov-quarter'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', () => {
+      syncCycleUI();
       populateMonthSelect('ov-month', 'ov-quarter', null);
       loadOverviewData();
     });
@@ -4052,6 +4283,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (sGrade) sGrade.addEventListener('change', loadSchoolData);
   const sQuarter = document.getElementById('s-quarter');
   if (sQuarter) sQuarter.addEventListener('change', () => {
+    syncCycleUI();
     populateMonthSelect('s-month', 's-quarter', null);
     loadSchoolData();
   });
@@ -4075,6 +4307,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const stQuarter = document.getElementById('st-quarter');
   if (stQuarter) stQuarter.addEventListener('change', () => {
+    syncCycleUI();
     populateMonthSelect('st-month', 'st-quarter', getAvailableMonths(ALL_STUDENTS));
     loadStudentData();
   });
@@ -4135,6 +4368,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   const rkQuarter = document.getElementById('rk-quarter');
   if (rkQuarter) rkQuarter.addEventListener('change', () => {
+    syncCycleUI();
     populateMonthSelect('rk-month', 'rk-quarter', null);
     loadRiskData();
   });
@@ -4142,6 +4376,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (rkMonth) rkMonth.addEventListener('change', applyRiskFilters);
 
   // Initial fetches
+  syncCycleUI();
   loadOverviewData();
   loadSchoolData();
   loadStudentData();
