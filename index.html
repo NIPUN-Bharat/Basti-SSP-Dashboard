@@ -2234,8 +2234,8 @@
 // CONFIG — Google Apps Script endpoint for Basti
 // ============================================================
 // Both views are served by the new web app: School via dataset=schools, Student via dataset=students.
-const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbw_vrms8r9gGV1F2QLfjLR5I-PcN9uMJ54P1Jfjb0_Ys7YbXUWcS-4syePvMfq4OkM/exec';
-const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbw_vrms8r9gGV1F2QLfjLR5I-PcN9uMJ54P1Jfjb0_Ys7YbXUWcS-4syePvMfq4OkM/exec';
+const SCHOOL_DATA_URL  = 'https://script.google.com/macros/s/AKfycbyETaixAkSsKXTfThgnZ0XgMMNpyNWvKSMl2o-vSUCba6JbCDXEH8Mz0ptjHGxZjx8h/exec';
+const STUDENT_DATA_URL = 'https://script.google.com/macros/s/AKfycbyETaixAkSsKXTfThgnZ0XgMMNpyNWvKSMl2o-vSUCba6JbCDXEH8Mz0ptjHGxZjx8h/exec';
 
 // Indian-format number helper.
 const fmtIN = new Intl.NumberFormat('en-IN');
@@ -2301,6 +2301,8 @@ function switchProgram(program) {
   // Reset dropdowns that lazily populate once (block/school lists can differ per program).
   ['s-block', 'st-block', 'rk-block', 'cmp-block', 'cmp-school', 'v-block', 'v-school'].forEach(resetSelectToDefault_);
 
+  syncCycleUI();
+
   // Re-fetch everything currently visible/cached.
   loadOverviewData();
   loadSchoolData();
@@ -2326,7 +2328,16 @@ function cycleFor(quarter) {
 }
 function isLadderView(quarter) { return cycleFor(quarter) === LADDER_CYCLE; }
 
+// Q3 onwards uses the Tangerine assessment (Grade 2): one score per task,
+// shown per competency like the ladder tool. Only the additional-aggregation
+// views carry Q3 data.
+const TG_QUARTERS = ['Q3'];
+function isTgView(quarter) { return TG_QUARTERS.includes(quarter) && CURRENT_PROGRAM !== 'ssp'; }
+// Views that show per-competency columns instead of the original-tool fields.
+function isCompView(quarter) { return isLadderView(quarter) || isTgView(quarter); }
+
 const CYCLE_NOTE_LADDER = '<strong>Q2 Cycle 2 · September 2026.</strong> Schools reassessed with the new competency-ladder tool (Grade 2 only, 15 competencies: 7 Hindi, 8 Maths). NIPUN = Hindi 5 of 7 and Maths 6 of 8 mastered. Not directly comparable with Cycle 1, which used the original tool.';
+const CYCLE_NOTE_TG = '<strong>Q3 · October 2026 onwards.</strong> Grade 2 assessment with 27 competencies (11 Hindi, 16 Maths), one per task. A competency\'s score is the share of its items answered correctly; tasks the form skipped and items not reached count as not correct. A competency is passed at 75% or more. NIPUN = Hindi 9 of 11 and Maths 12 of 16 passed. Not directly comparable with Q1–Q2, which used other tools.';
 
 // Show the Cycle tabs only for quarters that have more than one cycle.
 function syncCycleUI() {
@@ -2340,8 +2351,9 @@ function syncCycleUI() {
     });
   });
   document.querySelectorAll('.cycle-note').forEach(el => {
-    el.hidden = !isLadderView(document.getElementById(el.dataset.quarter).value);
-    el.innerHTML = CYCLE_NOTE_LADDER;
+    const q = document.getElementById(el.dataset.quarter).value;
+    el.hidden = !isCompView(q);
+    el.innerHTML = isTgView(q) ? CYCLE_NOTE_TG : CYCLE_NOTE_LADDER;
   });
 }
 
@@ -2370,7 +2382,20 @@ const LADDER_LABELS = {
   'UP_M2-NS01': 'Counting 1–20', 'UP_M2-NS02': 'Counting in Bundles (to 100)',
   'UP_M2-NS04': 'Place Value (1–99)', 'UP_M2-NS06': 'Counting 1–99',
   'UP_M2-NS08': 'Number Comparison (to 99)', 'UP_M2-ADD01': 'Addition (to 20)',
-  'UP_M2-SUB01': 'Subtraction (to 20)', 'UP_M2-PT01': 'Shape Patterns'
+  'UP_M2-SUB01': 'Subtraction (to 20)', 'UP_M2-PT01': 'Shape Patterns',
+  // Q3 Tangerine tasks (mirror TG_META in the Apps Script), in form order.
+  'TG_H2-LC': 'Listening Comprehension', 'TG_H2-OV': 'Oral Vocabulary',
+  'TG_H2-PC': 'Picture Comprehension', 'TG_H2-LNT': 'Letter Reading (timed)',
+  'TG_H2-WRUT': 'Word Reading (untimed)', 'TG_H2-WRT': 'Word Reading (timed)',
+  'TG_H2-SR': 'Sentence Reading', 'TG_H2-ORF': 'Passage Reading (timed)',
+  'TG_H2-RC': 'Reading Comprehension', 'TG_H2-LW': 'Letter Writing', 'TG_H2-WW': 'Word Writing',
+  'TG_M2-MSR': 'Measurement', 'TG_M2-CIB': 'Counting in Bundles',
+  'TG_M2-NIUT': 'Number Identification', 'TG_M2-NC': 'Number Comparison',
+  'TG_M2-NP': 'Number Patterns', 'TG_M2-SP': 'Shape Patterns', 'TG_M2-ADD': 'Addition',
+  'TG_M2-SUB': 'Subtraction', 'TG_M2-WPA': 'Word Problems (Addition)',
+  'TG_M2-WPS': 'Word Problems (Subtraction)', 'TG_M2-MUL': 'Multiplication',
+  'TG_M2-DH': 'Data Handling (Pictograph)', 'TG_M2-SH1': 'Shape Matching',
+  'TG_M2-SH2': 'Shape Properties', 'TG_M2-MON': 'Money', 'TG_M2-NW': 'Number Writing'
 };
 const isHindiCode = c => /_H\d/i.test(c);
 
@@ -2421,6 +2446,13 @@ function setDetailColumns(tableId, codes) {
 // One child's result on one ladder competency.
 function fmtLadderCell(s, code) {
   const v = s.ladder ? s.ladder[code] : null;
+  // Q3 Tangerine: show the task score; a tick = passed (75% of items or more).
+  if (s.tgScore && s.tgScore[code] != null) {
+    const pct = Math.round(s.tgScore[code]) + '%';
+    return v === 1
+      ? `<span class="lad lad-yes" title="Passed: ${pct} of items correct">✓ <small>${pct}</small></span>`
+      : `<span class="lad lad-no" title="Not passed: ${pct} of items correct (needs 75%)">✗ <small>${pct}</small></span>`;
+  }
   if (v === 1) {
     if ((s.ladderCarried || []).includes(code))
       return '<span class="lad lad-yes" title="Mastered in the earlier new-tool assessment; not retested">✓ <small>carried</small></span>';
@@ -2434,11 +2466,12 @@ function fmtLadderCell(s, code) {
 
 // Ladder view replaces the ORF card (no ORF in the new tool) with average mastery.
 function ladderAvgCard(students) {
-  const lad = (students || []).filter(s => s.tool === 'ladder' && s.scopeSize);
+  const lad = (students || []).filter(s => s.ladder && s.scopeSize);
   const avg = lad.length ? lad.reduce((a, s) => a + (s.masteredCount || 0), 0) / lad.length : null;
   const size = lad.length ? lad[0].scopeSize : 15;
+  const tg = lad.length && lad[0].tool === 'tangerine';
   return kpiCard(avg == null ? '\u2014' : `${avg.toFixed(1)} <span class="ov-of">/ ${size}</span>`,
-    'Avg Competencies Mastered', 'per child assessed', '', CARD_TIPS_LADDER);
+    tg ? 'Avg Competencies Passed' : 'Avg Competencies Mastered', 'per child assessed', '', tg ? CARD_TIPS_TG : CARD_TIPS_LADDER);
 }
 
 // ============================================================
@@ -2553,6 +2586,17 @@ const CARD_TIPS_LADDER = Object.assign({}, CARD_TIPS, {
   'Avg Competencies Mastered': '<strong>Average Competencies Mastered</strong><br>Mean number of the 15 Grade 2 ladder competencies each child has mastered (passed, skipped on the way up a ladder, or mastered earlier and not retested).'
 });
 
+// Q3 (Tangerine assessment) wording for the cards whose rule differs.
+const CARD_TIPS_TG = Object.assign({}, CARD_TIPS, {
+  'NIPUN Students':          '<strong>FLN Proficiency — NIPUN (Q3)</strong><br>Child passed <strong>Hindi 9 of 11</strong> and <strong>Maths 12 of 16</strong> competencies. A competency is passed when at least 75% of its items are correct.',
+  'Approaching':             '<strong>FLN Proficiency — Approaching (Q3)</strong><br>Child is proficient in one subject (Hindi 9 of 11, or Maths 12 of 16) but not both.',
+  'At Risk':                 '<strong>FLN Proficiency — At Risk (Q3)</strong><br>Child is proficient in neither Hindi (9 of 11) nor Maths (12 of 16).',
+  'Avg Competencies Passed': '<strong>Average Competencies Passed</strong><br>Mean number of the 27 Grade 2 competencies (11 Hindi, 16 Maths) in which each child got at least 75% of the items correct.'
+});
+function tipsFor(quarter) {
+  return isTgView(quarter) ? CARD_TIPS_TG : isLadderView(quarter) ? CARD_TIPS_LADDER : CARD_TIPS;
+}
+
 // Shared KPI card markup.
 function kpiCard(num, label, sub, cls, tips = CARD_TIPS) {
   const tip = tips[label];
@@ -2610,8 +2654,8 @@ function renderOverviewCards(blocks, studentsList) {
   let approaching = 0;
   blocks.forEach(b => { approaching += b.approachingStudents || 0; });
   const approachingPct = students ? (approaching / students) * 100 : 0;
-  const ladder = isLadderView(getOverviewFilters().quarter);
-  const tips = ladder ? CARD_TIPS_LADDER : CARD_TIPS;
+  const ladder = isCompView(getOverviewFilters().quarter);
+  const tips = tipsFor(getOverviewFilters().quarter);
 
   document.getElementById('ov-cards').innerHTML = [
     kpiCard(`${fmtIN.format(covered)} <span class="ov-of">/ ${fmtIN.format(schools)}</span>`,
@@ -2654,7 +2698,7 @@ function renderSchoolCards(scoped, covered) {
   const approachingPct = students ? (approaching / students) * 100 : 0;
   const el = document.getElementById('s-cards');
   if (!el) return;
-  const tips = isLadderView(getSchoolFilters().quarter) ? CARD_TIPS_LADDER : CARD_TIPS;
+  const tips = tipsFor(getSchoolFilters().quarter);
   el.innerHTML = [
     kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good', tips),
     kpiCard(`${approachingPct.toFixed(1)}%`, 'Approaching', `${fmtIN.format(approaching)} students`, 'is-approaching', tips),
@@ -2696,8 +2740,8 @@ function renderStudentCards(filtered) {
   const orfProfPct     = orfProfTotal ? (orfProfNipun / orfProfTotal) * 100 : null;
   const el = document.getElementById('st-cards');
   if (!el) return;
-  const ladder = isLadderView(getStudentFilters().quarter);
-  const tips = ladder ? CARD_TIPS_LADDER : CARD_TIPS;
+  const ladder = isCompView(getStudentFilters().quarter);
+  const tips = tipsFor(getStudentFilters().quarter);
   el.innerHTML = [
     kpiCard(fmtIN.format(students), 'Students Assessed', ''),
     kpiCard(`${nipunPct.toFixed(1)}%`, 'NIPUN Students', `${fmtIN.format(nipun)} students`, 'is-good', tips),
@@ -3092,7 +3136,7 @@ function renderPriorityBadge(status) {
 
 function renderSchoolRows(schools) {
   const tbody = document.getElementById('s-schools-tbody');
-  const codes = isLadderView(getSchoolFilters().quarter) ? ladderCodes(schools, 'ladderMastery') : null;
+  const codes = isCompView(getSchoolFilters().quarter) ? ladderCodes(schools, 'ladderMastery') : null;
   setDetailColumns('s-schools-table', codes);
   if (!schools.length) {
     tbody.innerHTML = '<tr><td colspan="33" class="schools-empty">No visited schools in the current scope.</td></tr>';
@@ -3201,7 +3245,7 @@ function applyStudentFilters() {
 
 function renderStudentRows(students) {
   const tbody = document.getElementById('st-students-tbody');
-  const codes = isLadderView(getStudentFilters().quarter) ? ladderCodes(ALL_STUDENTS, 'ladder') : null;
+  const codes = isCompView(getStudentFilters().quarter) ? ladderCodes(ALL_STUDENTS, 'ladder') : null;
   setDetailColumns('st-students-table', codes);
   if (!students.length) {
     tbody.innerHTML = '<tr><td colspan="33" class="schools-empty">No students match the current filters.</td></tr>';
@@ -3482,8 +3526,11 @@ function applyRiskFilters() {
 
 function renderRiskRanking(students) {
   const body = document.getElementById('rk-body');
-  const ladder = isLadderView(getRiskFilters().quarter);
-  document.getElementById('rk-subtitle').textContent = ladder
+  const ladder = isCompView(getRiskFilters().quarter);
+  const tgView = isTgView(getRiskFilters().quarter);
+  document.getElementById('rk-subtitle').textContent = tgView
+    ? 'Ranked by the % of assessed children who have not passed each competency (under 75% of its items correct; tasks the form skipped count as not passed) — the weakest areas needing intervention appear first.'
+    : ladder
     ? 'Ranked by the % of assessed children who have not mastered each competency (a competency the child never reached counts as not mastered) — the weakest areas needing intervention appear first.'
     : "Ranked by the % of assessed students scoring below 50% of the competency's max marks — the weakest areas needing intervention appear first.";
   if (!students.length) {
@@ -3540,7 +3587,7 @@ function renderRiskRanking(students) {
       <div class="rk-rank">${i + 1}</div>
       <div class="rk-label">${escapeHtml(r.label)}<br><span class="rk-subject ${r.subject}">${ladder ? (r.subject === 'lit' ? 'Hindi' : 'Maths') : (r.subject === 'lit' ? 'Literacy' : 'Numeracy')}</span></div>
       <div class="rk-bar-track"><span class="rk-bar-fill ${sev}" style="width:${r.pct.toFixed(1)}%"></span></div>
-      <div class="rk-meta"><span class="rk-pct">${r.pct.toFixed(1)}%</span>${fmtIN.format(r.atRisk)} / ${fmtIN.format(r.total)} ${ladder ? 'not mastered' : 'at risk'}</div>
+      <div class="rk-meta"><span class="rk-pct">${r.pct.toFixed(1)}%</span>${fmtIN.format(r.atRisk)} / ${fmtIN.format(r.total)} ${tgView ? 'not passed' : ladder ? 'not mastered' : 'at risk'}</div>
     </div>`;
   }).join('');
 
