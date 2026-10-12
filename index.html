@@ -1139,38 +1139,6 @@
     .page { display: block !important; page-break-after: always; }
   }
 
-  /* Program indicator (only shown when viewing RMEAL/Combined, not SSP) */
-  .program-badge {
-    display: none; font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 999px;
-    background: rgba(255,255,255,0.15); color: #fff; margin-left: 0.6rem;
-  }
-  .program-badge.visible { display: inline-block; }
-
-  /* Hidden gear button — sits in the shared footer, available on every page */
-  .secret-gear-wrap { position: relative; display: flex; justify-content: center; margin-top: 0.75rem; }
-  .secret-gear-btn {
-    background: transparent; border: none; cursor: pointer;
-    font-size: 1.3rem; color: var(--ink-faint); opacity: 0.7;
-    padding: 0.3rem 0.5rem; border-radius: 4px; transition: opacity 0.15s, color 0.15s;
-  }
-  .secret-gear-btn:hover { opacity: 1; color: var(--ink); }
-  .secret-gear-menu {
-    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
-    transform: translateX(-50%);
-    background: white; border: 1px solid var(--rule-strong); border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12); padding: 0.3rem; z-index: 500;
-    min-width: 150px;
-  }
-  .secret-gear-menu.open { display: block; }
-  .secret-gear-menu button {
-    display: block; width: 100%; text-align: left; background: transparent;
-    border: none; padding: 0.45rem 0.6rem; font-family: inherit; font-size: 0.82rem;
-    color: var(--ink); cursor: pointer; border-radius: 4px; font-weight: 500;
-  }
-  .secret-gear-menu button:hover { background: var(--cream); }
-  .secret-gear-menu button.current { color: var(--navy); font-weight: 700; }
-
   /* =====================================================================
      DESIGN SYSTEM — aligned with the NIPUN Monitoring app
      (Inter, navy chrome, surface/line/ink scale, 3-tone status palette)
@@ -1230,10 +1198,20 @@
   .topbar-meta .tm-strong { color: rgba(255,255,255,0.9); }
   .topbar-meta .tm-dot { color: rgba(255,255,255,0.45); }
   .topbar-meta .tm-soft { color: rgba(255,255,255,0.7); }
-  .program-badge {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.05em; padding: 2px 8px;
-    border-radius: var(--radius-control); background: rgba(255,255,255,0.15); color: #fff; margin-left: 2px;
+  /* Program switch (SSP / RMEAL / Combined) — segmented toggle in the top bar */
+  .program-toggle {
+    display: inline-flex; padding: 2px; gap: 2px; border-radius: var(--radius-control);
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
   }
+  .program-toggle button {
+    background: transparent; border: none; cursor: pointer; font-family: inherit;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.02em; line-height: 1;
+    color: rgba(255,255,255,0.75); padding: 6px 10px; border-radius: calc(var(--radius-control) - 2px);
+    transition: background 0.15s, color 0.15s;
+  }
+  .program-toggle button:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .program-toggle button.active { background: #fff; color: var(--brand-800); }
+  .program-toggle button:focus-visible { outline: 2px solid var(--brand-200); outline-offset: 1px; }
 
   /* ---------- App chrome: sidebar + main ---------- */
   .app-body { display: flex; min-height: calc(100vh - var(--topbar-h)); }
@@ -1561,12 +1539,6 @@
     margin-top: auto; padding: 28px 0 24px; border-top: 0; text-align: center;
     font-size: 11px; letter-spacing: 0.02em; color: var(--ink-400);
   }
-  .secret-gear-btn { color: var(--ink-400); font-size: 1.25rem; }
-  .secret-gear-btn:hover { color: var(--ink-700); }
-  .secret-gear-menu { border-color: var(--line-strong); border-radius: var(--radius-card); box-shadow: 0 6px 16px rgba(25,28,30,0.12); }
-  .secret-gear-menu button { font-size: 13px; }
-  .secret-gear-menu button:hover { background: var(--brand-50); }
-  .secret-gear-menu button.current { color: var(--brand-700); }
   ::selection { background: var(--brand-100); }
 
   /* ---------- Assessment cycle tabs (Q2: Cycle 1 / Cycle 2) ---------- */
@@ -1605,7 +1577,11 @@
   <div class="topbar-inner">
     <div class="brand">
       <div class="brand-text">NIPUN Basti</div>
-      <span class="program-badge" id="program-badge"></span>
+    </div>
+    <div class="program-toggle" id="program-toggle" role="group" aria-label="Program">
+      <button type="button" data-program="ssp" class="active" aria-pressed="true" onclick="switchProgram('ssp')">SSP</button>
+      <button type="button" data-program="rmeal" aria-pressed="false" onclick="switchProgram('rmeal')">RMEAL</button>
+      <button type="button" data-program="combined" aria-pressed="false" onclick="switchProgram('combined')">Combined</button>
     </div>
     <div class="topbar-meta">
       <span class="tm-strong">School Support Program</span>
@@ -2220,14 +2196,6 @@
 
 <div class="bottom-strip">
   NIPUN Basti · School Support Program Dashboard
-  <div class="secret-gear-wrap">
-    <button class="secret-gear-btn" type="button" onclick="toggleGearMenu(event)" aria-label="settings">⚙</button>
-    <div class="secret-gear-menu" id="gear-menu">
-      <button type="button" onclick="switchProgram('ssp')">SSP</button>
-      <button type="button" onclick="switchProgram('rmeal')">RMEAL</button>
-      <button type="button" onclick="switchProgram('combined')">Combined</button>
-    </div>
-  </div>
 </div>
 
   </main>
@@ -2246,29 +2214,10 @@ const fmtIN = new Intl.NumberFormat('en-IN');
 
 // ============================================================
 // Program scoping — 'ssp' (default, public) | 'rmeal' | 'combined'
-// Switched only via the hidden gear button on the Overview page.
+// Switched via the program toggle in the top bar.
 // ============================================================
 let CURRENT_PROGRAM = 'ssp';
 
-const PROGRAM_LABELS = { ssp: 'SSP', rmeal: 'RMEAL', combined: 'Combined' };
-
-function toggleGearMenu(evt) {
-  if (evt) evt.stopPropagation();
-  const menu = document.getElementById('gear-menu');
-  const isOpen = menu.classList.toggle('open');
-  menu.querySelectorAll('button').forEach(b => {
-    b.classList.toggle('current', b.textContent.trim() === PROGRAM_LABELS[CURRENT_PROGRAM]);
-  });
-  if (isOpen) {
-    const close = (e) => {
-      if (!menu.contains(e.target)) {
-        menu.classList.remove('open');
-        document.removeEventListener('click', close);
-      }
-    };
-    setTimeout(() => document.addEventListener('click', close), 0);
-  }
-}
 
 function resetSelectToDefault_(id) {
   const sel = document.getElementById(id);
@@ -2281,16 +2230,11 @@ function resetSelectToDefault_(id) {
 // underlying data changes.
 function switchProgram(program) {
   CURRENT_PROGRAM = program;
-  document.getElementById('gear-menu').classList.remove('open');
-
-  const badge = document.getElementById('program-badge');
-  if (program === 'ssp') {
-    badge.classList.remove('visible');
-    badge.textContent = '';
-  } else {
-    badge.textContent = PROGRAM_LABELS[program];
-    badge.classList.add('visible');
-  }
+  document.querySelectorAll('#program-toggle button').forEach(b => {
+    const on = b.dataset.program === program;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
 
   // Clear cached datasets so every page refetches under the new program.
   ALL_BLOCKS = [];
