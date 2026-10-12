@@ -2276,12 +2276,15 @@ function switchProgram(program) {
 // Q2 has Cycle 1 (Jul–Aug, original tool) and Cycle 2 (Sep, new
 // competency-ladder tool, Grade 2). Cycles are shown separately, never blended.
 // The backend returns Cycle 1 unless a request asks for another cycle.
+// All Quarters asks for 'latest': each school's most recent quarter and cycle,
+// per grade, counted once and then added up.
 // ============================================================
 const QUARTER_CYCLES = { Q2: ['1', '2'] };
 const LADDER_CYCLE = '2';   // cycle assessed with the new ladder tool
 let CURRENT_CYCLE = '1';
 
 function cycleFor(quarter) {
+  if (quarter === 'all') return 'latest';
   const cycles = QUARTER_CYCLES[quarter];
   return cycles && cycles.includes(CURRENT_CYCLE) ? CURRENT_CYCLE : '1';
 }
@@ -2296,6 +2299,7 @@ function isTgView(quarter) { return TG_QUARTERS.includes(quarter) && CURRENT_PRO
 function isCompView(quarter) { return isLadderView(quarter) || isTgView(quarter); }
 
 const CYCLE_NOTE_LADDER = '<strong>Q2 Cycle 2 · September 2026.</strong> Schools reassessed with the new competency-ladder tool (Grade 2 only, 15 competencies: 7 Hindi, 8 Maths). NIPUN = Hindi 5 of 7 and Maths 6 of 8 mastered. Not directly comparable with Cycle 1, which used the original tool.';
+const CYCLE_NOTE_ALL = '<strong>All Quarters · most recent results.</strong> Each school counts once per grade, with its most recent assessment (latest quarter and cycle), and those results are added up. Schools assessed with different tools are counted together; per-competency columns show the original tool only.';
 const CYCLE_NOTE_TG = '<strong>Q3 · October 2026 onwards.</strong> Grade 2 assessment with 27 competencies (11 Hindi, 16 Maths), one per task. A competency\'s score is the share of its items answered correctly; tasks the form skipped and items not reached count as not correct. A competency is passed at 75% or more. NIPUN = Hindi 9 of 11 and Maths 12 of 16 passed. Not directly comparable with Q1–Q2, which used other tools.';
 
 // Show the Cycle tabs only for quarters that have more than one cycle.
@@ -2311,8 +2315,8 @@ function syncCycleUI() {
   });
   document.querySelectorAll('.cycle-note').forEach(el => {
     const q = document.getElementById(el.dataset.quarter).value;
-    el.hidden = !isCompView(q);
-    el.innerHTML = isTgView(q) ? CYCLE_NOTE_TG : CYCLE_NOTE_LADDER;
+    el.hidden = !isCompView(q) && q !== 'all';
+    el.innerHTML = q === 'all' ? CYCLE_NOTE_ALL : isTgView(q) ? CYCLE_NOTE_TG : CYCLE_NOTE_LADDER;
   });
 }
 
@@ -2835,6 +2839,10 @@ function showDiagPanel(containerId, url, httpStatus, bodyText, errorMsg) {
     </div>`;
 }
 
+// 'all' params are left out of the URL (the backend's default), except
+// quarter: a missing quarter means Q1 to the backend.
+function keepParam_(k, v) { return !!v && (v !== 'all' || k === 'quarter'); }
+
 // JSONP loader — works from file://, bypasses CORS entirely.
 // Google Apps Script supports ?callback=fnName out of the box.
 const FETCH_TIMEOUT_MS = 45000;
@@ -2844,7 +2852,7 @@ function fetchDataJsonp(params = {}) {
     const base = (params.dataset === 'students') ? STUDENT_DATA_URL : SCHOOL_DATA_URL;
     const cbName = '__jsonpCb' + (++_jsonpCbCounter);
     const url = new URL(base);
-    Object.entries(params).forEach(([k, v]) => { if (v && v !== 'all') url.searchParams.set(k, v); });
+    Object.entries(params).forEach(([k, v]) => { if (keepParam_(k, v)) url.searchParams.set(k, v); });
     url.searchParams.set('callback', cbName);
 
     const script = document.createElement('script');
@@ -2888,7 +2896,7 @@ async function fetchData(params = {}) {
   if (!params.program) params.program = CURRENT_PROGRAM;
   const base = (params.dataset === 'students') ? STUDENT_DATA_URL : SCHOOL_DATA_URL;
   const url = new URL(base);
-  Object.entries(params).forEach(([k, v]) => { if (v && v !== 'all') url.searchParams.set(k, v); });
+  Object.entries(params).forEach(([k, v]) => { if (keepParam_(k, v)) url.searchParams.set(k, v); });
   const urlStr = url.toString();
   if (!_fetchCache.has(urlStr)) {
     const call = (async () => {
