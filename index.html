@@ -2214,10 +2214,24 @@ const fmtIN = new Intl.NumberFormat('en-IN');
 
 // ============================================================
 // Program scoping — 'ssp' (default, public) | 'rmeal' | 'combined'
-// Switched via the program toggle in the top bar.
+// Switched via the program toggle in the top bar; the last choice is
+// remembered per browser.
 // ============================================================
-let CURRENT_PROGRAM = 'ssp';
+const PROGRAMS = ['ssp', 'rmeal', 'combined'];
+let CURRENT_PROGRAM = (() => {
+  let saved = null;
+  try { saved = localStorage.getItem('ssp-program'); } catch (_) {}
+  return PROGRAMS.includes(saved) ? saved : 'ssp';
+})();
 
+function syncProgramToggle_() {
+  document.querySelectorAll('#program-toggle button').forEach(b => {
+    const on = b.dataset.program === CURRENT_PROGRAM;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+syncProgramToggle_();
 
 function resetSelectToDefault_(id) {
   const sel = document.getElementById(id);
@@ -2230,11 +2244,8 @@ function resetSelectToDefault_(id) {
 // underlying data changes.
 function switchProgram(program) {
   CURRENT_PROGRAM = program;
-  document.querySelectorAll('#program-toggle button').forEach(b => {
-    const on = b.dataset.program === program;
-    b.classList.toggle('active', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  });
+  try { localStorage.setItem('ssp-program', program); } catch (_) {}
+  syncProgramToggle_();
 
   // Clear cached datasets so every page refetches under the new program.
   ALL_BLOCKS = [];
